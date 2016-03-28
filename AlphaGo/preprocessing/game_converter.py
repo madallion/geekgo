@@ -3,6 +3,9 @@ from AlphaGo.preprocessing.preprocessing import Preprocess
 from AlphaGo.util import sgf_iter_states
 import AlphaGo.go as go
 import os
+import warnings
+import sgf
+
 
 class game_converter:
 
@@ -10,9 +13,9 @@ class game_converter:
 		"""Convert move into training label - a board with the given move
 		marked as '1' and all other positions '0'
 		"""
-		one_hot = np.zeros((1, size, size),dtype=bool)
-		(x,y) = move
-		one_hot[0,x,y] = 1
+		one_hot = np.zeros((1, size, size), dtype=bool)
+		(x, y) = move
+		one_hot[0, x, y] = 1
 		return one_hot
 
 	def convert_game(self, file_name, features=None):
@@ -24,7 +27,7 @@ class game_converter:
 		(see _encode_label)
 		"""
 
-		with open(file_name,'r') as file_object:
+		with open(file_name, 'r') as file_object:
 			state_action_iterator = sgf_iter_states(file_object.read())
 
 		if features is None:
@@ -38,16 +41,28 @@ class game_converter:
 				nn_output = self._encode_label(move, state.size)
 				yield (nn_input, nn_output)
 
-	def batch_convert(self, folder_path, features=None):
+	def batch_convert(self, folder_path, features=None, ignore_errors=True):
 		"""lazily convert folder of games into training samples
 		"""
 		file_names = os.listdir(folder_path)
 		for file_name in file_names:
-			if file_name[-4:] != '.sgf': continue
+			if file_name[-4:] != '.sgf':
+				continue
 			print file_name
-			training_samples = self.convert_game(os.path.join(folder_path,file_name), features)
-			for sample in training_samples:
-				yield sample
+			try:
+				training_samples = self.convert_game(os.path.join(folder_path, file_name), features)
+				for sample in training_samples:
+					yield sample
+			except go.IllegalMove:
+				warnings.warn("Illegal Move encountered in %s\n\tdropping the remainder of the game" % file_name)
+			except sgf.ParseException:
+				warnings.warn("Could not parse %s\n\tdropping game" % file_name)
+			except Exception as e:
+				# catch everything else
+				if ignore_errors:
+					warnings.warn("Unkown exception with file %s\n\t%s" % (file_name, e))
+				else:
+					raise e
 
 if __name__ == '__main__':
 	import argparse
@@ -59,8 +74,9 @@ if __name__ == '__main__':
 	parser.add_argument("--no-meta", help="Flag to disable saving a metadata.json file in the outfolder", default=False, action="store_true")
 	parser.add_argument("infolder", help="Path to folder containing games")
 	parser.add_argument("outfolder", help="Path to target folder.")
-	parser.add_argument("-auto_split", help="Randomly place each sample into a train, test, or dev subfolder with probabilities .93, .05, and .02 respectively.",
-	 					default=True)
+	parser.add_argument(
+		"-auto_split", help="Parcel each sample into train, test, or dev subfolder with probabilities .93, .05, and .02 respectively.",
+		default=True)
 
 	args = parser.parse_args()
 
@@ -79,19 +95,23 @@ if __name__ == '__main__':
 	file_num = 0
 
 	if args.auto_split:
-		train_path = os.path.join(args.outfolder,'train')
-		test_path = os.path.join(args.outfolder,'test')
-		dev_path = os.path.join(args.outfolder,'dev')
-		# create these subfolders if they don't exist
-		if not os.path.exists(train_path): os.makedirs(train_path)
-		if not os.path.exists(test_path): os.makedirs(test_path)
-		if not os.path.exists(dev_path): os.makedirs(dev_path)
+		np.random.seed(0)  # ensures reproducibility of splits
+		train_path = os.path.join(args.outfolder, 'train')
+		test_path = os.path.join(args.outfolder, 'test')
+		dev_path = os.path.join(args.outfolder, 'dev')
+
+		if not os.path.exists(train_path):
+			os.makedirs(train_path)
+		if not os.path.exists(test_path):
+			os.makedirs(test_path)
+		if not os.path.exists(dev_path):
+			os.makedirs(dev_path)
+
+	save_directory = args.outfolder
 	for s_a_tuple in converter.batch_convert(args.infolder, features=feature_list):
-		file_name = str(file_num)+".pkl"
+		file_name = str(file_num) + ".pkl"
 		if args.auto_split:
-			# select subfolder randomly w/ appropriate probability
-			subfolder = np.random.choice([train_path,test_path,dev_path], 1, p=[.93,.05,.02])[0]
-			pickle.dump(s_a_tuple, open(os.path.join(subfolder,file_name), "wb"))
-		else:
-			pickle.dump(s_a_tuple, open(os.path.join(args.outfolder,file_name), "wb"))
+			save_directory = np.random.choice([train_path, test_path, dev_path], 1, p=[.93, .05, .02])[0]
+		with open(save_directory, "wb") as f:
+			pickle.dump(s_a_tuple, f)
 		file_num += 1

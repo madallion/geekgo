@@ -2,7 +2,7 @@
 *.npy
 *.h5
 *.sgf
-!tests/test_data/sgf/*.sgf
 *.pkl
+!tests/test_data/sgf/*.sgf
 !tests/test_data/pickle/test/*.pkl
 !tests/test_data/pickle/train/*.pkl

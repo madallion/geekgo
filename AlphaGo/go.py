@@ -92,7 +92,7 @@ class GameStateManager(object):
             'x': computer_bundle['x'],
             'y': computer_bundle['y'],
             'legal_moves': self.game_state_instance.get_legal_moves(),
-            'dead_stones': human_remove_set + computer_remove_set
+            'dead_stones': list(set(list(human_remove_set) + list(computer_remove_set)))
         }
 
     def perform_step(self, bundle):

@@ -82,6 +82,8 @@ class GameStateManager(object):
         if not (bundle['x'], bundle['y']) == (-1, -1):
             self.perform_step(bundle)
             human_remove_set = self.game_state_instance.last_remove_set.copy()
+        else:
+            human_remove_set = set()
 
         computer_move = self._computer_move()
         computer_bundle = self._pack_computer_move(computer_move[0], computer_move[1])

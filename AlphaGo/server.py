@@ -13,10 +13,11 @@ GSM_POOL = dict()
 @route('/move', method='OPTIONS')
 @route('/move', method='POST')
 def move():
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'origin, x-csrftoken, content-type, accept'
+
     if request.method == 'OPTIONS':
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-        response.headers['origin, x-csrftoken, content-type, accept'] = 'origin, x-csrftoken, content-type, accept'
         return 'received options request'
 
     if not request.get_cookie('betago_user_guid'):

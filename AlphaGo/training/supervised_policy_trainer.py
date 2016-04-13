@@ -22,7 +22,7 @@ def shuffled_hdf5_batch_generator(state_dataset, action_dataset, indices, batch_
 	state_batch_shape = (batch_size,) + state_dataset.shape[1:]
 	game_size = state_batch_shape[-1]
 	Xbatch = np.zeros(state_batch_shape)
-	Ybatch = np.zeros((batch_size, game_size, game_size))
+	Ybatch = np.zeros((batch_size, game_size * game_size))
 	batch_idx = 0
 	while True:
 		for data_idx in indices:
@@ -33,7 +33,7 @@ def shuffled_hdf5_batch_generator(state_dataset, action_dataset, indices, batch_
 			state = np.array([transform(plane) for plane in state_dataset[data_idx]])
 			action = transform(one_hot_action(action_dataset[data_idx], game_size))
 			Xbatch[batch_idx] = state
-			Ybatch[batch_idx] = action
+			Ybatch[batch_idx] = action.flatten()
 			batch_idx += 1
 			if batch_idx == batch_size:
 				batch_idx = 0
@@ -50,17 +50,20 @@ class MetadataWriterCallback(Callback):
 		}
 
 	def on_epoch_end(self, epoch, logs={}):
-		self.metadata["epochs"].append({
-			"acc": logs.get("acc"),
-			"val_acc": logs.get("val_acc")
-		})
+		self.metadata["epochs"].append(logs)
 
-		best_accuracy = self.metadata["epochs"][self.metadata["best_epoch"]]["val_acc"]
-		if logs.get("val_acc") > best_accuracy:
+		if "val_loss" in logs:
+			key = "val_loss"
+		else:
+			key = "loss"
+
+		best_loss = self.metadata["epochs"][self.metadata["best_epoch"]][key]
+		if logs.get(key) < best_loss:
 			self.metadata["best_epoch"] = epoch
 
 		with open(self.file, "w") as f:
 			json.dump(self.metadata, f)
+
 
 BOARD_TRANSFORMATIONS = [
 	lambda feature: feature,
@@ -86,6 +89,7 @@ def run_training(cmd_line_args=None):
 	# frequently used args
 	parser.add_argument("--minibatch", "-B", help="Size of training data minibatches. Default: 16", type=int, default=16)
 	parser.add_argument("--epochs", "-E", help="Total number of iterations on the data. Default: 10", type=int, default=10)
+	parser.add_argument("--epoch-length", "-l", help="Number of training examples considered 'one epoch'. Default: # training data", type=int, default=None)
 	parser.add_argument("--learning-rate", "-r", help="Learning rate - how quickly the model learns at first. Default: .03", type=float, default=.03)
 	parser.add_argument("--decay", "-d", help="The rate at which learning decreases. Default: .0001", type=float, default=.0001)
 	parser.add_argument("--workers", "-w", help="Number of 'workers' workon on batch generator in parallel. Default: 4", type=int, default=4)
@@ -116,7 +120,7 @@ def run_training(cmd_line_args=None):
 	# load model from json spec
 	model = CNNPolicy.load_model(args.model).model
 	if resume:
-		model.load_weights(args.weights)
+		model.load_weights(os.path.join(args.out_directory, args.weights))
 
 	# TODO - (waiting on game_converter) verify that features of model match features of training data
 	dataset = h5.File(args.train_data)
@@ -152,7 +156,7 @@ def run_training(cmd_line_args=None):
 	meta_writer.metadata["model_file"] = args.model
 
 	# create ModelCheckpoint to save weights every epoch
-	checkpoint_template = os.path.join(args.out_directory, "weights.{epoch:02d}.hdf5")
+	checkpoint_template = os.path.join(args.out_directory, "weights.{epoch:05d}.hdf5")
 	checkpointer = ModelCheckpoint(checkpoint_template)
 
 	# load precomputed random-shuffle indices or create them
@@ -191,18 +195,21 @@ def run_training(cmd_line_args=None):
 		BOARD_TRANSFORMATIONS)
 
 	sgd = SGD(lr=args.learning_rate, decay=args.decay)
-	model.compile(loss='binary_crossentropy', optimizer=sgd)
+	model.compile(loss='categorical_crossentropy', optimizer=sgd)
+
+	samples_per_epoch = args.epoch_length or n_train_data
 
 	if args.verbose:
 		print "STARTING TRAINING"
 
 	model.fit_generator(
 		generator=train_data_generator,
-		samples_per_epoch=n_train_data,
+		samples_per_epoch=samples_per_epoch,
 		nb_epoch=args.epochs,
 		callbacks=[checkpointer, meta_writer],
 		validation_data=val_data_generator,
 		nb_val_samples=n_val_data,
+		show_accuracy=True,
 		nb_worker=args.workers)
 
 if __name__ == '__main__':

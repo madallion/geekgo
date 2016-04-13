@@ -20,15 +20,16 @@ def move():
     if request.method == 'OPTIONS':
         return 'received options request'
 
-    if not request.get_cookie('betago_user_guid'):
+    if request.get_cookie('betago_user_guid'):
+        player_uuid = request.get_cookie('betago_user_guid')
+    else:
         player_uuid = str(uuid.uuid4())
         response.set_cookie('betago_user_guid', player_uuid)
-    else:
-        player_uuid = request.get_cookie('betago_user_guid')
 
     if DEBUG:
-        print 'BODY: ', str(request.body.read())
-        print 'JSON: ', request.json
+        print 'input: ', str(request.body.read())
+        print 'user_uuid: ', player_uuid, 
+        print 'size_gsm_pool: ', len(GSM_POOL)
 
     incoming_bundle = request.json
 
@@ -38,7 +39,12 @@ def move():
     else:
         gsm = GSM_POOL[player_uuid]
 
-    return gsm.do_workflow(incoming_bundle)
+    resp = gsm.do_workflow(incoming_bundle)
+
+    if DEBUG:
+        gsm.print_board()
+
+    return resp
 
 if __name__ == "__main__":
     # TODO: initialize your model here

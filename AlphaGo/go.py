@@ -121,6 +121,20 @@ class GameStateManager(object):
             self.white_player = UserInfo(bundle['name'], bundle['rank'])
 
         self.game_state_instance.do_move((bundle['x'], bundle['y']))
+
+    def print_board(self):
+        board = self.game_state_instance.board
+
+        for y in range(self.game_state_instance.size):
+            row = ""
+            for x in range(self.game_state_instance.size):
+                mapping = {
+                    1: 'B',
+                    -1: 'W',
+                    0: '.'
+                }
+                row += mapping[int(board[x][y])] + ' '
+            print row
         
         
 class GameState(object):

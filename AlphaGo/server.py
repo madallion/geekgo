@@ -23,7 +23,7 @@ def move():
     response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
 
     if DEBUG:
-        print 'BODY: ', str(request.body)
+        print 'BODY: ', str(request.body.read())
         print 'JSON: ', request.json
 
     incoming_bundle = request.json

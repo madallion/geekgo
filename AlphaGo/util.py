@@ -84,9 +84,8 @@ def sgf_iter_states(sgf_string):
 		gs.do_move(move, player)
 		
 		
-def gamestate_dump(gamestate, path="d:\tmp\gamestate",):
-    """
-	Dump game
+def gamestate_dump(gamestate, path="d:\tmp\gamestate.gs"):
+    """ Dump game state to file
 	"""
 	output = open(path, 'wb')
 	pickle.dump(gamestate, output)

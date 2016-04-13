@@ -23,24 +23,27 @@
         userInfo.rank = 'wu';
         var url = 'http://suzvm-linux33:8080/move';
         function opponentRound() {
+            var brainSuccessed = function(){
+                _isMyTurn = true;
+            }
+
+            var brainFailed = function (){
+                _isMyTurn = false;
+            }
             // Get whold board -> post to server
             _step++;
+
             if(!_isMyTurn){
-
-                $.when(brainStep(url,userInfo,userStep)).done(brainSuccessed).fail(brainFailed);
+                $.when(brainStep(url,userInfo,userStep))
+                    .done(brainSuccessed)
+                    .fail(brainFailed);
             }
-           // data: {name:'name',rank:userInfo.rank,x:userStep.x,y:userStep.y},
-            function brainStep(){
 
+            // data: {name:'name', rank:userInfo.rank, x:userStep.x, y:userStep.y}, 
+            function brainStep(url, userInfo, userStep){
                 var deferred = $.Deferred();
-                 $.ajax({
-                    type:'POST',
-                    url:url,
-                    data: JSON.stringify({name:'name',rank:'rank',x:2,y:3}),
-                    contentType: "application/json"
-                }).done(successed).fail(failed);
 
-                var successed = function(wegoStep){
+                var successed = function(wgoStep){
                      _board.addObject({
                             x: wgoStep.x,
                             y: wgoStep.y,
@@ -48,7 +51,6 @@
                         });
                      deferred.resolve();
                 } 
-
                 var failed = function(){
                             _board.addObject({
                             x: 1,
@@ -58,17 +60,24 @@
                     console.log('There is something wrong with server');
                     deferred.reject('There is something wrong with server');
                 }
+                
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    data: JSON.stringify({
+                        name: userInfo.name,
+                        rank: userInfo.rank,
+                        x: userStep.x,
+                        y: userStep.y
+                    }),
+                    contentType: "application/json"
+                })
+                .done(successed)
+                .fail(failed);
 
                 return deferred.promise();
             }
 
-            function brainSuccessed(){
-                _isMyTurn = true;
-            }
-
-            function brainFailed(){
-                _isMyTurn = false;
-            }
         }
 
         function numberToAlphabet(numX,numY){

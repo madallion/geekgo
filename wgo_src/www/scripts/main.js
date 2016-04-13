@@ -44,12 +44,20 @@
                 var deferred = $.Deferred();
 
                 var successed = function(wgoStep){
-                     _board.addObject({
-                            x: wgoStep.x,
-                            y: wgoStep.y,
-                            c: _wgoColor
+                    _board.addObject({
+                        x: wgoStep.x,
+                        y: wgoStep.y,
+                        c: _wgoColor
+                    });
+                    
+                    // remove dead stones
+                    if (wgoStep.dead_stones) {
+                        wgoStep.dead_stones.map(function(removeAction){
+                            _board.removeObjectsAt(removeAction[0], removeAction[1]);
                         });
-                     deferred.resolve();
+                    }
+
+                    deferred.resolve();
                 } 
                 var failed = function(){
                             _board.addObject({

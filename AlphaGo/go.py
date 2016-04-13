@@ -1,4 +1,11 @@
 import numpy as np
+import os
+import argparse
+import json
+import cPickle as pickle
+import random
+from keras.optimizers import SGD
+from AlphaGo.models.policy import CNNPolicy
 
 WHITE = -1
 BLACK = +1
@@ -29,11 +36,20 @@ class GameStateManager(object):
     """
     manage GameState operation, and take the signal from the front-end
     """
+    self.localDirectory = "D:\\ps\\club\\Go\\geekgo";
 
     def __init__(self):
         self.game_state_instance = GameState()
         self.black_player = None
         self.white_player = None
+        metapath = os.path.join(self.localDirectory, 'all_feat_model.json')
+        with open(metapath) as metafile:
+            metadata = json.load(metafile)
+        arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
+        self.policy = CNNPolicy(feature_list=metadata['features'], **arch);
+        weights_file= os.path.join(self.localDirectory, 'weights.hdf5');
+        self.policy.model.load_weights(weights_file);
+        self.policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
         
     def _is_first_step(self):
         return (not self.black_player) and (not self.white_player)
@@ -44,9 +60,9 @@ class GameStateManager(object):
     def _computer_move(self):
         # TODO: generate SGF and send to GPU get the answer
         # now just randomly pick one from legal moves.
-        import random
-        computer_move = random.choice(self.game_state_instance.get_legal_moves())
-        return computer_move
+        s = self.policy.forward([self.policy.preprocessor.state_to_tensor(gs)]);
+        computer_move = np.unravel_index(s.argmax(), s.shape);    
+        return computer_move;
 
     def _pack_computer_move(self, x, y):
         return {

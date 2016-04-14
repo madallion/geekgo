@@ -30,11 +30,11 @@ class GameStateManager(object):
     manage GameState operation, and take the signal from the front-end
     """
 
-    def __init__(self):
+    def __init__(self, policyNet):
         self.game_state_instance = GameState()
         self.black_player = None
         self.white_player = None
-        
+        self.policy = policyNet;
     def _is_first_step(self):
         return (not self.black_player) and (not self.white_player)
 
@@ -44,8 +44,9 @@ class GameStateManager(object):
     def _computer_move(self):
         # TODO: generate SGF and send to GPU get the answer
         # now just randomly pick one from legal moves.
-        import random
-        computer_move = random.choice(self.game_state_instance.get_legal_moves())
+        nextMoveList = self.policy.eval_state(self.game_state_instance, self.game_state_instance.get_legal_moves())
+        srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
+        computer_move = srtList[0][0]
         return computer_move
 
     def _pack_computer_move(self, x, y):

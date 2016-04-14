@@ -1,6 +1,6 @@
 import sgf
 import string
-import cpickle as pickle
+import six.moves.cPickle as pickle
 from AlphaGo import go
 
 
@@ -85,7 +85,7 @@ def sgf_iter_states(sgf_string):
 		
 		
 def gamestate_dump(gamestate, path="d:\tmp\gamestate.gs"):
-    """ Dump game state to file
+	""" Dump game state to file
 	"""
 	output = open(path, 'wb')
 	pickle.dump(gamestate, output)

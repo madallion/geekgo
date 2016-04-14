@@ -9,18 +9,27 @@ import uuid
 
 DEBUG = True
 GSM_POOL = dict()
+import os
+import argparse
+import json
+#import cPickle as pickle
+import six.moves.cPickle as pickle
+import random
+import numpy as np
+from keras.callbacks import ModelCheckpoint
+from AlphaGo.models.policy import CNNPolicy
 
-def __init__(self, *args, **kwargs):
-    train_folder = '/home/yimlin/betago_workspace/deploy'
-    metapath = os.path.join(train_folder, 'all_feat_model.json')
-    with open(metapath) as metafile:
-        metadata = json.load(metafile)
-    weights_file= os.path.join(train_folder, 'weights.1sepoch0413.hdf5');
-    arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
-    policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
-    policy.model.load_weights(weights_file);
-    policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
-    bottle.__init__(self, *args, **kwargs)
+#def __init__(self, *args, **kwargs):
+train_folder = '/home/yimlin/betago_workspace/deploy'
+metapath = os.path.join(train_folder, 'all_feat_model.json')
+with open(metapath) as metafile:
+    metadata = json.load(metafile)
+weights_file= os.path.join(train_folder, 'weights.3rdEpoch.hdf5');
+arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
+policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
+policy.model.load_weights(weights_file);
+policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+#bottle.__init__(self, *args, **kwargs)
 
 @route('/move', method='OPTIONS')
 @route('/move', method='POST')
@@ -46,7 +55,7 @@ def move():
     incoming_bundle = request.json
 
     if player_uuid not in GSM_POOL:
-        gsm = go.GameStateManager()
+        gsm = go.GameStateManager(policy)
         GSM_POOL[player_uuid] = gsm
     else:
         gsm = GSM_POOL[player_uuid]
@@ -61,4 +70,4 @@ def move():
 if __name__ == "__main__":
     # TODO: initialize your model here
     
-    bottle.run(host='0.0.0.0', debug=True)
+    bottle.run(host='0.0.0.0', port=8080, debug=True)

@@ -10,6 +10,18 @@ import uuid
 DEBUG = True
 GSM_POOL = dict()
 
+def __init__(self, *args, **kwargs):
+    train_folder = '/home/yimlin/betago_workspace/deploy'
+    metapath = os.path.join(train_folder, 'all_feat_model.json')
+    with open(metapath) as metafile:
+        metadata = json.load(metafile)
+    weights_file= os.path.join(train_folder, 'weights.1sepoch0413.hdf5');
+    arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
+    policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
+    policy.model.load_weights(weights_file);
+    policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+    bottle.__init__(self, *args, **kwargs)
+
 @route('/move', method='OPTIONS')
 @route('/move', method='POST')
 def move():
@@ -48,4 +60,5 @@ def move():
 
 if __name__ == "__main__":
     # TODO: initialize your model here
+    
     bottle.run(host='0.0.0.0', debug=True)

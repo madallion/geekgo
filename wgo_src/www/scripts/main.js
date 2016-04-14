@@ -18,9 +18,8 @@
         // Robot round
         // Return new board
         var userStep = new Point(-1,-1);
-        url = 'http://www.baidu.com';
         userInfo.name = 'jianqiang';
-        userInfo.rank = 'wu';
+        userInfo.rank = '0';
         var url = 'http://suzvm-linux33:8080/move';
         function opponentRound() {
             var brainSuccessed = function(){

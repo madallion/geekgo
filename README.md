@@ -8,7 +8,7 @@ This project is a replication/reference implementation of DeepMind's 2016 Nature
 MicrosoftGeekHub Build Badge:
 
 [![Build Status](https://travis-ci.org/Rochester-NRT/AlphaGo.svg?branch=develop)](https://travis-ci.org/MicrosoftGeekHub/AlphaGo)
-[![Gitter](https://badges.gitter.im/MicrosoftGeekHub/AlphaGo.svg)](https://gitter.im/MicrosoftGeekHub/AlphaGo?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Gitter](https://badges.gitter.im/MicrosoftGeekHub/AlphaGo.svg)](https://gitter.im/MicrosoftGeekHub?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 # Current project status
 

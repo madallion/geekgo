@@ -20,7 +20,7 @@
         var userStep = new Point(-1,-1);
         userInfo.name = 'jianqiang';
         userInfo.rank = '0';
-        var url = 'http://suzvm-linux33:8080/move';
+        var url = 'http://geekgo.corp.microsoft.com:8080/move';
         function opponentRound() {
             var brainSuccessed = function(){
                 _isMyTurn = true;

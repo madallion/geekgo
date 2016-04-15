@@ -58,7 +58,7 @@
 
         function opponentRound() {
             _isMyTurn = false;
-            var url = 'http://suzvm-linux33:8080/move';
+            var url = 'http://geekgo.corp.microsoft.com:8080/move';
             var wgoColor = getWgoColor(_myColor);
 
             function successed(wgoStep) {

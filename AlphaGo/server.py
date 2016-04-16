@@ -9,6 +9,7 @@ import uuid
 
 DEBUG = True
 GSM_POOL = dict()
+GSM_IP_POOL = dict()
 import os
 import argparse
 import json
@@ -49,16 +50,27 @@ def move():
 
     if DEBUG:
         print 'input: ', str(request.body.read())
-        print 'user_uuid: ', player_uuid, 
         print 'size_gsm_pool: ', len(GSM_POOL)
 
     incoming_bundle = request.json
+    client_ip = request.environ.get('REMOTE_ADDR')
 
-    if player_uuid not in GSM_POOL:
+    sessionId = ""
+    if ('sessionId' in incoming_bundle):
+        sessionId = incoming_bundle['sessionId']
+        if (sessionId ==""):
+            sessionId = str(uuid.uuid4())
+            incoming_bundle['sessionId'] = sessionId
+
+    if (sessionId ==""):
+        sessionId = client_ip;
+        incoming_bundle['sessionId'] = sessionId
+
+    if sessionId not in GSM_IP_POOL:
         gsm = go.GameStateManager(policy)
-        GSM_POOL[player_uuid] = gsm
+        GSM_IP_POOL[sessionId] = gsm
     else:
-        gsm = GSM_POOL[player_uuid]
+        gsm = GSM_IP_POOL[sessionId]
 
     resp = gsm.do_workflow(incoming_bundle)
 

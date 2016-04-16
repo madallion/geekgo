@@ -64,6 +64,7 @@ class GameStateManager(object):
         Args:
             bundle (dict):
                 {
+                    "sessionId": (int)
                     "x": (int),
                     "y": (int),
                     "rank": (str),
@@ -91,11 +92,17 @@ class GameStateManager(object):
         self.perform_step(computer_bundle)
         computer_remove_set = self.game_state_instance.last_remove_set.copy()
 
+        if 'sessionId' in bundle:
+            sessionId = bundle['sessionId']
+        else:
+            sessionId = "xxx"
+
         return {
             'x': computer_bundle['x'],
             'y': computer_bundle['y'],
             'legal_moves': self.game_state_instance.get_legal_moves(),
-            'dead_stones': list(set(list(human_remove_set) + list(computer_remove_set)))
+            'dead_stones': list(set(list(human_remove_set) + list(computer_remove_set))),
+            'sessionId': sessionId
         }
 
     def perform_step(self, bundle):

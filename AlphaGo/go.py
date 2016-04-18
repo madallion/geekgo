@@ -34,7 +34,8 @@ class GameStateManager(object):
         self.game_state_instance = GameState()
         self.black_player = None
         self.white_player = None
-        self.policy = policyNet;
+        self.policy = policyNet
+
     def _is_first_step(self):
         return (not self.black_player) and (not self.white_player)
 
@@ -45,7 +46,7 @@ class GameStateManager(object):
         # TODO: generate SGF and send to GPU get the answer
         # now just randomly pick one from legal moves.
         nextMoveList = self.policy.eval_state(self.game_state_instance, self.game_state_instance.get_legal_moves())
-        srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
+        srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True)
         computer_move = srtList[0][0]
         return computer_move
 
@@ -64,7 +65,6 @@ class GameStateManager(object):
         Args:
             bundle (dict):
                 {
-                    "sessionId": (int)
                     "x": (int),
                     "y": (int),
                     "rank": (str),
@@ -92,17 +92,11 @@ class GameStateManager(object):
         self.perform_step(computer_bundle)
         computer_remove_set = self.game_state_instance.last_remove_set.copy()
 
-        if 'sessionId' in bundle:
-            sessionId = bundle['sessionId']
-        else:
-            sessionId = "xxx"
-
         return {
             'x': computer_bundle['x'],
             'y': computer_bundle['y'],
             'legal_moves': self.game_state_instance.get_legal_moves(),
-            'dead_stones': list(set(list(human_remove_set) + list(computer_remove_set))),
-            'sessionId': sessionId
+            'dead_stones': list(set(list(human_remove_set) + list(computer_remove_set)))
         }
 
     def perform_step(self, bundle):

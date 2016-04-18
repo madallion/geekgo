@@ -67,11 +67,6 @@
                 logWgo(_step, wgoColor, wgoStep.x, wgoStep.y);
 
                 sessionId = wgoStep.sessionId;
-                _board.addObject({
-                    x: wgoStep.x,
-                    y: wgoStep.y,
-                    c: wgoColor
-                });
 
                 // remove dead stones
                 if (wgoStep.dead_stones) {
@@ -79,6 +74,12 @@
                         _board.removeObjectsAt(removeAction[0], removeAction[1]);
                     });
                 }
+
+                _board.addObject({
+                    x: wgoStep.x,
+                    y: wgoStep.y,
+                    c: wgoColor
+                });
 
                 _isMyTurn = true;
             }

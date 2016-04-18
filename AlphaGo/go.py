@@ -43,8 +43,6 @@ class GameStateManager(object):
         return (self.black_player) and (not self.white_player)
 
     def _computer_move(self):
-        # TODO: generate SGF and send to GPU get the answer
-        # now just randomly pick one from legal moves.
         nextMoveList = self.policy.eval_state(self.game_state_instance, self.game_state_instance.get_legal_moves())
         srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True)
         computer_move = srtList[0][0]

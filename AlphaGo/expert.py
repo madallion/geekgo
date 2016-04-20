@@ -57,9 +57,8 @@ class Expert():
 		shuffle(res)
 		return res
 
-	def policy_network_random(state):
-		s = GameState()
-		moves = s.get_legal_moves()
+	def policy_network_random(self, state):
+		moves = state.get_legal_moves()
 		actions = []
 		for move in moves:
 			actions.append((move, random.uniform(0, 1)))
@@ -81,7 +80,7 @@ class Expert():
 		if state.current_player == self.aiColor:
 			aiTurn = True
 		for i in range(0, nDepth - 1):
-			nextMoveList = policy_network_random(state)
+			nextMoveList = self.policy_network_random(state)
 			state.do_move(nextMoveList[0][0])
 			if aiTurn:
 				numOfCaptured += len(state.last_remove_set)

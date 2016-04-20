@@ -145,7 +145,7 @@ def get_policy(weights_file, metapath):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Perform reinforcement learning '
 									 'to improve given policy network. Second phase of pipeline.')
-	parser.add_argument("--initial_weights", help="Path to file with weights to start from.", default="D:\\ps\\club\\Go\\weights.1sepoch0413.hdf5")
+	parser.add_argument("--initial_weights", help="Path to file with weights to start from.", default="D:\\ps\\club\\Go\\models\weights.00008.hdf5")
 	parser.add_argument("--initial_json", help="Path to file with initial network params.", default="D:\\ps\\club\\Go\\all_feat_model.json")
 	parser.add_argument("--model_folder", help="Path to folder where the model "
 						"params will be saved after each epoch. Default: None", default="d:\\ps\\club\\Go\\exp\\models")

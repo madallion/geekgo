@@ -12,6 +12,7 @@ from keras.callbacks import ModelCheckpoint
 # local modules
 from AlphaGo.models.policy import CNNPolicy
 import go
+import gsm as GameStateMan
 
 # global variables
 DEBUG = True
@@ -28,11 +29,13 @@ def init_cnnpolicynetwork():
     with open(metapath) as metafile:
         metadata = json.load(metafile)
 
-    weights_file = os.path.join(train_folder, 'weights.3rdEpoch.hdf5')
+    weights_file = os.path.join(train_folder, 'weights.00001.hdf5')
     arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
     POLICY = CNNPolicy(feature_list=metadata['feature_list'], **arch)
     POLICY.model.load_weights(weights_file)
     POLICY.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+
+init_cnnpolicynetwork()
 
 
 @route('/move', method='OPTIONS')
@@ -48,14 +51,17 @@ def move():
     incoming_bundle = request.json
 
     # determine what session id to use
-    if ('sessionId' in incoming_bundle and incoming_bundle['sessionId']):
+    if ('sessionId' in incoming_bundle and (incoming_bundle['sessionId'] !="" )):
         session_id = incoming_bundle['sessionId']
+        print session_id
     else:
         session_id = str(uuid.uuid4())
+    incoming_bundle['sessionId'] = session_id
+    print session_id
 
     # retrieve or create GameStateManager
     if session_id not in GSM_POOL:
-        gsm = go.GameStateManager(POLICY)
+        gsm = GameStateMan.GameStateManager(POLICY)
         GSM_POOL[session_id] = gsm
     else:
         gsm = GSM_POOL[session_id]

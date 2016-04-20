@@ -30,7 +30,19 @@ policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 class TestMCTS(unittest.TestCase):
 
 	def setUp(self):
-		self.s = GameState()
+		gs = GameState(size=19)
+		gs.do_move((3, 3))  # B
+		gs.do_move((15, 3))  # W
+		gs.do_move((15, 15))  # B
+		gs.do_move((3, 15))  # W
+		gs.do_move((16, 15))
+		gs.do_move((16, 16))
+		gs.do_move((9, 9))
+		gs.do_move((14, 15))
+		gs.do_move((10, 10))
+		gs.do_move((14, 15))
+		self.s = gs
+		
 		self.mcts = MCTS(self.s, value_network, policy_network, rollout_policy)
 		self.treenode = TreeNode()
 
@@ -47,7 +59,7 @@ class TestMCTS(unittest.TestCase):
 	#	self.assertEqual(1, treenode.nVisits, 'incorrect visit count')
 
 	def test_mcts_getMove(self):
-		action = self.mcts.getMove(3, 10)
+		action = self.mcts.getMove(3, 1000)
 		self.assertIsNotNone(action, 'no output action')
 		print ('final next move', action);
 

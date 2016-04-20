@@ -74,10 +74,12 @@ class TreeNode(object):
 		None
 
 		"""
-
-		for index in range(0, len(self.children)):
-			self.children[actions[index][0]].u_value = actions[index][1] / (1 + self.children[actions[index][0]].nVisits)
-
+		for index in range(0, len(actions)):
+			try:
+				self.children[actions[index][0]].u_value = actions[index][1] / (1 + self.children[actions[index][0]].nVisits)
+			except:
+				print ('ERROR::updateU_value', self.children, actions, index)
+				continue;
 	def backUp(self, value):
 
 		"""Track the mean value of evaluations in the subtrees
@@ -130,7 +132,14 @@ class MCTS(object):
 			treenode.expansion(actions)
 			treenode.updateU_value(actions)
 			treenode, action = treenode.selection()
-			state.do_move(action)
+			print ('L%s simulated acition: ' % str(index + 1), action);
+			
+			try:
+				state.do_move(action)
+				print ('under node: ', action);
+			except:
+				print 'ilegal move %s , %s' % (action[0], action[1]);
+				continue
 			visited.insert(0, (state, treenode))
 
 		for index in range(0, len(visited)):
@@ -185,16 +194,25 @@ class MCTS(object):
 
 		actions = self.priorProb(self.state)
 		self.treenode.expansion(actions)
-
+		print ('candidate actions:', actions)
 		for n in range(0, nSimulations):
-
+			
 			self.treenode.updateU_value(actions)
 			treenode, action = self.treenode.selection()
+			print ('L0 simulated action', action);
 			state = self.state.copy()
 			state.do_move(action)
 			treenode = self.DFS(nDepth, treenode, state)
 			self.treenode.children[action] = treenode
-
+			lastTpl = None;
+			for tpl in actions:
+				if tpl[0][0] == action[0] and tpl[0][1] == action[1]:
+					lastTpl = tpl;
+					break;
+			if lastTpl in actions:
+				actions.remove(lastTpl)
+			else:
+				print (action, actions, lastTpl)
 		self.treenode.updateU_value(actions)
 		treenode, action = self.treenode.selection()
 		return action
@@ -202,3 +220,4 @@ class MCTS(object):
 
 class ParallelMCTS(MCTS):
 	pass
+

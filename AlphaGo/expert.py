@@ -16,25 +16,20 @@ from AlphaGo.models.policy import CNNPolicy
 
 from random import shuffle
 
-#train_folder = 'D:\\ps\\club\\Go'
-#metapath = os.path.join(train_folder, 'all_feat_model.json')
-#weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
 
-#with open(metapath) as metafile:
-#    metadata = json.load(metafile)
-#arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
-#policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
-#policy.model.load_weights(weights_file);
-#policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
 class Expert():
 
-	def __init__(self, policy, state):
+	def __init__(self, policy, state, aiColor = WHITE):
 		self.s = GameState()
 		self.policy = policy
 		self.mcts = MCTS(self.s, self.value_network, self.policy_network, self.rollout_policy)
 		self.treenode = TreeNode()
-
+		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
 		
 		## update the tree		
@@ -77,18 +72,22 @@ class Expert():
 	    return 1
 
 	def rollout_policy(self, state):
-	    nDepth = 3;
-	    numOfCaptured = 0;
-	    numOfBeCaptured = 0;
-	    #let you go first
-	    yourTurn = True
-	    for i in range(0, nDepth - 1):
-			if yourTurn:
+		nDepth = 3;
+		#let you go first
+		numOfCaptured = 0;
+		numOfBeCaptured = 0;
+		aiTurn = False
+		#Assume AI always take WHITE
+		if state.current_player == self.aiColor:
+			aiTurn = True
+		for i in range(0, nDepth - 1):
+			nextMoveList = policy_network_random(state)
+			state.do_move(nextMoveList[0][0])
+			if aiTurn:
 				numOfCaptured += len(state.last_remove_set)
 			else:
 				numOfBeCaptured += len(state.last_remove_set)
-			nextMoveList = self.policy_network(state)
-			state.do_move(nextMoveList[0][0])
-			yourTurn = not yourTurn
-	    return numOfCaptured / (numOfBeCaptured + 10)
+			aiTurn = not aiTurn
+
+		return numOfCaptured / (numOfBeCaptured + 10)
 

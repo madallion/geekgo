@@ -16,6 +16,10 @@ import AlphaGo.gsm as GameStateMan
 
 from random import shuffle
 
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
 
 
 def init_cnnpolicynetwork():
@@ -40,12 +44,11 @@ class TestMCTS(unittest.TestCase):
 		gs.do_move((15, 3))  # W
 		gs.do_move((15, 15))  # B
 		gs.do_move((3, 15))  # W
-		gs.do_move((16, 15))
+		gs.do_move((16, 15))  # B
 		gs.do_move((16, 16))
-		gs.do_move((9, 9))
+		gs.do_move((9, 9))		# B
 		gs.do_move((14, 15))
-		gs.do_move((10, 10))
-		gs.do_move((0, 0))
+		gs.do_move((10, 10))	 # B
 		self.s = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)

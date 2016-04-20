@@ -1,6 +1,12 @@
 ﻿import numpy as np
 from AlphaGo.expert import Expert
 from AlphaGo.go import GameState
+
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
+
 class UserInfo(object):
 
     """
@@ -34,7 +40,12 @@ class GameStateManager(object):
         self.lastMove = (-1, -1)
 
     def _is_first_step(self):
-        return (not self.black_player) and (not self.white_player)
+        if (not self.black_player) and (not self.white_player):
+            aiColor = BLACK
+            return True
+        else:
+            aiColor = WHITE
+            return False
 
     def _is_second_step(self):
         return (self.black_player) and (not self.white_player)
@@ -42,7 +53,7 @@ class GameStateManager(object):
     def _computer_move(self):
         #using the current state to init an AI expert
         #self.expert = Expert(self.policy, self.game_state_instance)
-        nextMove = self.expert.mcts_getMove(self.game_state_instance, self.lastMove);
+        nextMove = self.expert.mcts_getMove(self.game_state_instance, self.lastMove, self.aiColor);
         return nextMove
 
     def _pack_computer_move(self, x, y):

@@ -150,6 +150,7 @@ class MCTS(object):
 
 		visited[-1][1].updateQ_value(value)
 		visited[-1][1].updateVisits()
+		print (visited)
 		return visited[-1][1]
 
 	def leafEvaluation(self, state):

@@ -16,6 +16,10 @@ import AlphaGo.gsm as GameStateMan
 
 from random import shuffle
 
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
 
 
 def init_cnnpolicynetwork():
@@ -40,20 +44,18 @@ class TestMCTS(unittest.TestCase):
 		gs.do_move((15, 3))  # W
 		gs.do_move((15, 15))  # B
 		gs.do_move((3, 15))  # W
-		gs.do_move((16, 15))
+		gs.do_move((16, 15))  # B
 		gs.do_move((16, 16))
-		gs.do_move((9, 9))
+		gs.do_move((9, 9))		# B
 		gs.do_move((14, 15))
-		gs.do_move((10, 10))
-		gs.do_move((0, 0))
-		self.s = gs
+		gs.do_move((10, 10))	 # B
+		self.gs = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.s, value_network, policy_network_random, rollout_policy)
-		self.treenode = TreeNode()
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy, n_search=2)
 
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
@@ -68,9 +70,9 @@ class TestMCTS(unittest.TestCase):
 	#	self.assertEqual(1, treenode.nVisits, 'incorrect visit count')
 
 	def test_mcts_getMove(self):
-		action = self.mcts.getMove(3, 1000)
-		self.assertIsNotNone(action, 'no output action')
-		print ('final next move', action);
+		move = self.mcts.get_move(self.gs)
+		self.mcts.update_with_move(move)
+		print ('final next move', move);
 
 
 def policy_network(state):

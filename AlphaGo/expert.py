@@ -27,66 +27,84 @@ class Expert():
 	def __init__(self, policy, state, aiColor = WHITE):
 		self.s = GameState()
 		self.policy = policy
-		self.mcts = MCTS(self.s, self.value_network, self.policy_network, self.rollout_policy)
-		self.treenode = TreeNode()
+		self.mcts = MCTS(self.s, self.value_network, self.policy_network, self.rollout_policy, n_search=4)
 		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
-		
-		## update the tree		
 		if lastAction[0] != -1:
-			if lastAction not in self.mcts.treenode.children:
-				self.mcts.treenode.expansion([(lastAction, 0.5)])
-				self.mcts.treenode.updateU_value([(lastAction, 0.5)])
-			self.mcts.state.do_move(lastAction)
-			self.mcts.treenode = self.mcts.treenode.children[lastAction]
+			self.mcts.update_with_move(lastAction)		
+		move = self.mcts.get_move(self.gs)
+		self.mcts.update_with_move(move)
+		return move
 
-		nextAction = self.mcts.getMove(3, 10)
-		self.mcts.state.do_move(nextAction)
+		## update the tree		
+		#if lastAction[0] != -1:
+		#	if lastAction not in self.mcts.treenode.children:
+		#		self.mcts.treenode.expansion([(lastAction, 0.5)])
+		#		self.mcts.treenode.updateU_value([(lastAction, 0.5)])
+		#	self.mcts.state.do_move(lastAction)
+		#	self.mcts.treenode = self.mcts.treenode.children[lastAction]
 
-		if nextAction not in self.mcts.treenode.children:
-			self.mcts.treenode.expansion([(nextAction, 0.5)])
-			self.mcts.treenode.updateU_value([(nextAction, 0.5)])
-		self.mcts.treenode = self.mcts.treenode.children[nextAction] #drop previous root node
+		#nextAction = self.mcts.getMove(3, 10)
+		#self.mcts.state.do_move(nextAction)
 
-		return nextAction
+		#if nextAction not in self.mcts.treenode.children:
+		#	self.mcts.treenode.expansion([(nextAction, 0.5)])
+		#	self.mcts.treenode.updateU_value([(nextAction, 0.5)])
+		#self.mcts.treenode = self.mcts.treenode.children[nextAction] #drop previous root node
 
-	def policy_network(self, state):
-		nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
-		srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-		res = srtList[0:10]
-		shuffle(res)
-		return res
+def policy_network(state):
+    nextMoveList = policy.eval_state(state, state.get_legal_moves())
+    srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
+    res = srtList[0:10]
+    shuffle(res)
+    return res
 
-	def policy_network_random(self, state):
-		moves = state.get_legal_moves()
-		actions = []
-		for move in moves:
-			actions.append((move, random.uniform(0, 1)))
-		return actions
+def policy_network_random_noEyes(state):
+	moves = state.get_legal_moves(include_eyes=False)
+	# 'random' distribution over positions that is smallest
+	# at (0,0) and largest at (18,18)
+	probs = np.arange(361, dtype=np.float)
+	probs = probs / probs.sum()
+	return zip(moves, probs)
 
-	def value_network(self, state):
-	    return 0.5
+def policy_network_random_withEyes(state):
+	moves = state.get_legal_moves(include_eyes=True)
+	# 'random' distribution over positions that is smallest
+	# at (0,0) and largest at (18,18)
+	probs = np.arange(361, dtype=np.float)
+	probs = probs / probs.sum()
+	return zip(moves, probs)
 
-	def rollout_policy_dummy(state):
-	    return 1
+def policy_network_random(state):
+	moves = state.get_legal_moves()
+	actions = []
+	for move in moves:
+		actions.append((move, random.uniform(0, 1)))
+	return actions
 
-	def rollout_policy(self, state):
-		nDepth = 3;
-		#let you go first
-		numOfCaptured = 0;
-		numOfBeCaptured = 0;
-		aiTurn = False
-		#Assume AI always take WHITE
-		if state.current_player == self.aiColor:
-			aiTurn = True
-		for i in range(0, nDepth - 1):
-			nextMoveList = self.policy_network_random(state)
-			state.do_move(nextMoveList[0][0])
-			if aiTurn:
-				numOfCaptured += len(state.last_remove_set)
-			else:
-				numOfBeCaptured += len(state.last_remove_set)
-			aiTurn = not aiTurn
+def value_network(state):
+	#TODO 金角银边草肚皮
+	return 0.5
 
-		return numOfCaptured / (numOfBeCaptured + 10)
+def rollout_policy_random(state):
+	return policy_network_random(state)
 
+def rollout_policy_score(state):
+	nDepth = 3;
+	#let you go first
+	numOfCaptured = 0;
+	numOfBeCaptured = 0;
+	yourTurn = True
+	#Assume AI always take WHITE
+	if state.current_player == BLACK:
+		yourTurn = False
+	for i in range(0, nDepth - 1):
+		nextMoveList = policy_network_random(state)
+		state.do_move(nextMoveList[0][0])
+		if yourTurn:
+			numOfCaptured += len(state.last_remove_set)
+		else:
+			numOfBeCaptured += len(state.last_remove_set)
+
+		yourTurn = not yourTurn
+	return numOfCaptured / (numOfBeCaptured + 10)

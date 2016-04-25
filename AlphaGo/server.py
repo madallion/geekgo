@@ -29,7 +29,7 @@ def init_cnnpolicynetwork():
     with open(metapath) as metafile:
         metadata = json.load(metafile)
 
-    weights_file = os.path.join(train_folder, 'weights.00001.hdf5')
+    weights_file = os.path.join(train_folder, 'weights.00008-2ndRl.hdf5')
     arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
     POLICY = CNNPolicy(feature_list=metadata['feature_list'], **arch)
     POLICY.model.load_weights(weights_file)

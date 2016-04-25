@@ -163,6 +163,8 @@
 })(window);
 
 var game = wGame(document.getElementById("board"), {
-    width: 400,
+width: 400,
 });
 game.init();
+
+

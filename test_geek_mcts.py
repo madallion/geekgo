@@ -27,7 +27,8 @@ def init_cnnpolicynetwork():
 	global policy
 	train_folder = 'D:\\ps\\club\\Go'
 	metapath = os.path.join(train_folder, 'all_feat_model.json')
-	weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+	#weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+	weights_file='D:\ps\club\Go\models\weights.00000.hdf5';
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
@@ -41,15 +42,15 @@ class TestMCTS(unittest.TestCase):
 	def setUp(self):
 		gs = GameState(size=19)
 		gs.do_move((3, 3))  # B
-		gs.do_move((15, 3))  # W
-		gs.do_move((15, 15))  # B
 		gs.do_move((3, 15))  # W
-		gs.do_move((9, 9))  # B
-		gs.do_move((9, 10))
-		gs.do_move((10, 10))		# B
-		gs.do_move((10, 11))
-		gs.do_move((11, 11))
-		gs.do_move((11, 12))	 # B
+		#gs.do_move((15, 15))  # B
+		#gs.do_move((3, 15))  # W
+		#gs.do_move((9, 9))  # B
+		#gs.do_move((9, 10))
+		#gs.do_move((10, 10))		# B
+		#gs.do_move((10, 11))
+		#gs.do_move((11, 11))
+		#gs.do_move((11, 12))	 # B
 		self.gs = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)
@@ -80,7 +81,8 @@ def policy_network(state):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
     res = srtList[0:10]
-    shuffle(res)
+    print res
+ #  shuffle(res)
     return res
 
 def policy_network_random_noEyes(state):

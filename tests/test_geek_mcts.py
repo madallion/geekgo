@@ -15,17 +15,18 @@ import numpy as np
 from AlphaGo.models.policy import CNNPolicy
 
 from random import shuffle
+from AlphaGo import util
 
 train_folder = 'D:\\ps\\club\\Go'
 metapath = os.path.join(train_folder, 'all_feat_model.json')
-weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+weights_file='D:\ps\club\Go\models\weights.1sepoch0413.hdf5';
 
 with open(metapath) as metafile:
     metadata = json.load(metafile)
 arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
 policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
 policy.model.load_weights(weights_file);
-policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+#policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
 class TestMCTS(unittest.TestCase):
 
@@ -40,9 +41,10 @@ class TestMCTS(unittest.TestCase):
 		gs.do_move((9, 9))
 		gs.do_move((14, 15))
 		gs.do_move((10, 10))
-		gs.do_move((14, 15))
 		self.s = gs
-		
+		util.gamestate_to_sgf(gs, "d:\\tmp\\tmp.gs")
+		print "state saved to sgf"
+
 		self.mcts = MCTS(self.s, value_network, policy_network, rollout_policy)
 		self.treenode = TreeNode()
 

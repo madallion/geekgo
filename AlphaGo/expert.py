@@ -15,7 +15,7 @@ import numpy as np
 from AlphaGo.models.policy import CNNPolicy
 
 from random import shuffle
-
+from AlphaGo import util
 #train_folder = 'D:\\ps\\club\\Go'
 #metapath = os.path.join(train_folder, 'all_feat_model.json')
 #weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';

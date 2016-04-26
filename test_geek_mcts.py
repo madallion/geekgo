@@ -27,7 +27,8 @@ def init_cnnpolicynetwork():
 	global policy
 	train_folder = 'D:\\ps\\club\\Go'
 	metapath = os.path.join(train_folder, 'all_feat_model.json')
-	weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+	#weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+	weights_file='D:\ps\club\Go\models\weights.00000.hdf5';
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
@@ -41,21 +42,22 @@ class TestMCTS(unittest.TestCase):
 	def setUp(self):
 		gs = GameState(size=19)
 		gs.do_move((3, 3))  # B
-		gs.do_move((15, 3))  # W
-		gs.do_move((15, 15))  # B
 		gs.do_move((3, 15))  # W
-		gs.do_move((16, 15))  # B
-		gs.do_move((16, 16))
-		gs.do_move((9, 9))		# B
-		gs.do_move((14, 15))
-		gs.do_move((10, 10))	 # B
+		#gs.do_move((15, 15))  # B
+		#gs.do_move((3, 15))  # W
+		#gs.do_move((9, 9))  # B
+		#gs.do_move((9, 10))
+		#gs.do_move((10, 10))		# B
+		#gs.do_move((10, 11))
+		#gs.do_move((11, 11))
+		#gs.do_move((11, 12))	 # B
 		self.gs = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy, n_search=2)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, n_search=4)
 
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
@@ -79,8 +81,25 @@ def policy_network(state):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
     res = srtList[0:10]
-    shuffle(res)
+    print res
+ #  shuffle(res)
     return res
+
+def policy_network_random_noEyes(state):
+	moves = state.get_legal_moves(include_eyes=False)
+	# 'random' distribution over positions that is smallest
+	# at (0,0) and largest at (18,18)
+	probs = np.arange(361, dtype=np.float)
+	probs = probs / probs.sum()
+	return zip(moves, probs)
+
+def policy_network_random_withEyes(state):
+	moves = state.get_legal_moves(include_eyes=True)
+	# 'random' distribution over positions that is smallest
+	# at (0,0) and largest at (18,18)
+	probs = np.arange(361, dtype=np.float)
+	probs = probs / probs.sum()
+	return zip(moves, probs)
 
 def policy_network_random(state):
 	moves = state.get_legal_moves()
@@ -93,10 +112,10 @@ def value_network(state):
 	#金角银边草肚皮
 	return 0.5
 
-def rollout_policy_dummy(state):
-	return 1
+def rollout_policy_random(state):
+	return policy_network_random(state)
 
-def rollout_policy(state):
+def rollout_policy_score(state):
 	nDepth = 3;
 	#let you go first
 	numOfCaptured = 0;

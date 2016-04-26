@@ -16,79 +16,101 @@ from AlphaGo.models.policy import CNNPolicy
 
 from random import shuffle
 
-#train_folder = 'D:\\ps\\club\\Go'
-#metapath = os.path.join(train_folder, 'all_feat_model.json')
-#weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
 
-#with open(metapath) as metafile:
-#    metadata = json.load(metafile)
-#arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
-#policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
-#policy.model.load_weights(weights_file);
-#policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+def policy_network_random_noEyes(state):
+	moves = state.get_legal_moves(include_eyes=False)
+	# 'random' distribution over positions that is smallest
+	# at (0,0) and largest at (18,18)
+	probs = np.arange(361, dtype=np.float)
+	probs = probs / probs.sum()
+	return zip(moves, probs)
+
+def policy_network_random_withEyes(state):
+	moves = state.get_legal_moves(include_eyes=True)
+	# 'random' distribution over positions that is smallest
+	# at (0,0) and largest at (18,18)
+	probs = np.arange(361, dtype=np.float)
+	probs = probs / probs.sum()
+	return zip(moves, probs)
+
+def policy_network_random(state):
+	moves = state.get_legal_moves()
+	actions = []
+	for move in moves:
+		actions.append((move, random.uniform(0, 1)))
+	return actions
+
 
 class Expert():
 
-	def __init__(self, policy, state):
-		self.s = GameState()
+	def __init__(self, policy, state, aiColor = WHITE):
 		self.policy = policy
-		self.mcts = MCTS(self.s, self.value_network, self.policy_network, self.rollout_policy)
-		self.treenode = TreeNode()
-
+		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, n_search=2)
+		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
-		
-		## update the tree		
 		if lastAction[0] != -1:
-			if lastAction not in self.mcts.treenode.children:
-				self.mcts.treenode.expansion([(lastAction, 0.5)])
-				self.mcts.treenode.updateU_value([(lastAction, 0.5)])
-			self.mcts.state.do_move(lastAction)
-			self.mcts.treenode = self.mcts.treenode.children[lastAction]
+			self.mcts.update_with_move(lastAction)
 
-		nextAction = self.mcts.getMove(3, 10)
-		self.mcts.state.do_move(nextAction)
+		#quick move for first 10 steps
+		if len(state.history) < 10:
+			moves = self.policy_network(state);
+			move = moves[0][0];
+		else:
+			move = self.mcts.get_move(state)
 
-		if nextAction not in self.mcts.treenode.children:
-			self.mcts.treenode.expansion([(nextAction, 0.5)])
-			self.mcts.treenode.updateU_value([(nextAction, 0.5)])
-		self.mcts.treenode = self.mcts.treenode.children[nextAction] #drop previous root node
+		self.mcts.update_with_move(move)
+		return move
 
-		return nextAction
+		## update the tree		
+		#if lastAction[0] != -1:
+		#	if lastAction not in self.mcts.treenode.children:
+		#		self.mcts.treenode.expansion([(lastAction, 0.5)])
+		#		self.mcts.treenode.updateU_value([(lastAction, 0.5)])
+		#	self.mcts.state.do_move(lastAction)
+		#	self.mcts.treenode = self.mcts.treenode.children[lastAction]
+
+		#nextAction = self.mcts.getMove(3, 10)
+		#self.mcts.state.do_move(nextAction)
+
+		#if nextAction not in self.mcts.treenode.children:
+		#	self.mcts.treenode.expansion([(nextAction, 0.5)])
+		#	self.mcts.treenode.updateU_value([(nextAction, 0.5)])
+		#self.mcts.treenode = self.mcts.treenode.children[nextAction] #drop previous root node
 
 	def policy_network(self, state):
-		nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
-		srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-		res = srtList[0:10]
-		shuffle(res)
-		return res
-
-	def policy_network_random(state):
-		s = GameState()
-		moves = s.get_legal_moves()
-		actions = []
-		for move in moves:
-			actions.append((move, random.uniform(0, 1)))
-		return actions
+	    nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
+	    srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
+	    res = srtList[0:10]
+	    #shuffle(res)
+	    return res
 
 	def value_network(self, state):
-	    return 0.5
-
-	def rollout_policy_dummy(state):
-	    return 1
+		#TODO 
+		return 0.5
 
 	def rollout_policy(self, state):
-	    nDepth = 3;
-	    numOfCaptured = 0;
-	    numOfBeCaptured = 0;
-	    #let you go first
-	    yourTurn = True
-	    for i in range(0, nDepth - 1):
+		return policy_network_random(state)
+
+	def rollout_policy_score(state):
+		nDepth = 3;
+		#let you go first
+		numOfCaptured = 0;
+		numOfBeCaptured = 0;
+		yourTurn = True
+		#Assume AI always take WHITE
+		if state.current_player == BLACK:
+			yourTurn = False
+		for i in range(0, nDepth - 1):
+			nextMoveList = policy_network_random(state)
+			state.do_move(nextMoveList[0][0])
 			if yourTurn:
 				numOfCaptured += len(state.last_remove_set)
 			else:
 				numOfBeCaptured += len(state.last_remove_set)
-			nextMoveList = self.policy_network(state)
-			state.do_move(nextMoveList[0][0])
-			yourTurn = not yourTurn
-	    return numOfCaptured / (numOfBeCaptured + 10)
 
+			yourTurn = not yourTurn
+		return numOfCaptured / (numOfBeCaptured + 10)

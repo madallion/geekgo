@@ -1,6 +1,12 @@
 ﻿import numpy as np
 from AlphaGo.expert import Expert
 from AlphaGo.go import GameState
+
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
+
 class UserInfo(object):
 
     """
@@ -40,8 +46,6 @@ class GameStateManager(object):
         return (self.black_player) and (not self.white_player)
 
     def _computer_move(self):
-        #using the current state to init an AI expert
-        #self.expert = Expert(self.policy, self.game_state_instance)
         nextMove = self.expert.mcts_getMove(self.game_state_instance, self.lastMove);
         return nextMove
 
@@ -82,6 +86,8 @@ class GameStateManager(object):
             human_remove_set = self.game_state_instance.last_remove_set.copy()
         else:
             human_remove_set = set()
+            self.expert.aiColor = BLACK
+
         #computer need to know lastMove
         self.lastMove = (bundle['x'], bundle['y'])
         computer_move = self._computer_move()

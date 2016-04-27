@@ -4,13 +4,13 @@ import numpy as np
 class TreeNode(object):
 	"""Tree Representation of MCTS that covers Selection, Expansion, Evaluation, and backUp (aka 'update()')
 	"""
-	def __init__(self, parent, prior_p):
+	def __init__(self, parent, prior_p, c_puct = 5, _lmbda = 0.5):
 		self.parent = parent
-		self.nVisits = 0
-		self.Q_value = 0
-		self.u_value = prior_p
-		self.children = {}
+		self.nVisits = 1
 		self.P = prior_p
+		self.Q_value = _lmbda * c_puct * self.P
+		self.u_value =  (1 - _lmbda) * c_puct * self.P
+		self.children = {}
 
 	def expansion(self, actions):
 		"""Expand subtree - a dictionary with a tuple of (x,y) position as keys, TreeNode object as values
@@ -34,6 +34,8 @@ class TreeNode(object):
 		Returns:
 		a tuple of (action, next_node)
 		"""
+		for (a, n) in self.children.iteritems():
+			print (a, n.Q_value, n.u_value)
 		return max(self.children.iteritems(), key=lambda (a, n): n.toValue())
 
 	def isLeaf(self):
@@ -57,7 +59,7 @@ class TreeNode(object):
 		self.Q_value = (mean_V + leaf_value) / self.nVisits
 		# update u (note that u is not normalized to be a distribution)
 		self.u_value = c_puct * self.P * np.sqrt(self.parent.nVisits) / (1 + self.nVisits)
-
+		print ('u_value', self.parent.nVisits, self.nVisits, self.u_value)
 	def toValue(self):
 		"""Return action value Q plus bonus u(P)
 		"""
@@ -158,7 +160,10 @@ class MCTS(object):
 
 		# chosen action is the *most visited child*, not the highest-value
 		# (note that they are the same as self._n_search gets large)
-		return max(self.root.children.iteritems(), key=lambda (a, n): n.nVisits)[0]
+		#return max(self.root.children.iteritems(), key=lambda (a, n): n.nVisits)[0]
+
+		#instead , just chosen action with the highest-value
+		return max(self.root.children.iteritems(), key=lambda (a, n): n.toValue())[0]
 
 	def update_with_move(self, last_move):
 		"""step forward in the tree and discard everything that isn't still reachable

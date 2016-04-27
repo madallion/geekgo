@@ -43,9 +43,9 @@ class TestMCTS(unittest.TestCase):
 		gs = GameState(size=19)
 		gs.do_move((3, 3))  # B
 		gs.do_move((3, 15))  # W
-		#gs.do_move((15, 15))  # B
-		#gs.do_move((3, 15))  # W
-		#gs.do_move((9, 9))  # B
+		gs.do_move((15, 15))  # B
+		gs.do_move((3, 15))  # W
+		gs.do_move((9, 9))  # B
 		#gs.do_move((9, 10))
 		#gs.do_move((10, 10))		# B
 		#gs.do_move((10, 11))

@@ -23,7 +23,8 @@ POLICY = None
 def init_cnnpolicynetwork():
     global POLICY
 
-    train_folder = '/home/yimlin/betago_workspace/deploy'
+    #train_folder = '/home/yimlin/betago_workspace/deploy'
+    train_folder = 'D:\ps\club\Go\models'
     metapath = os.path.join(train_folder, 'all_feat_model.json')
 
     with open(metapath) as metafile:
@@ -33,7 +34,7 @@ def init_cnnpolicynetwork():
     arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
     POLICY = CNNPolicy(feature_list=metadata['feature_list'], **arch)
     POLICY.model.load_weights(weights_file)
-    POLICY.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+    #POLICY.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
 init_cnnpolicynetwork()
 
@@ -79,4 +80,4 @@ def move():
 
 if __name__ == "__main__":
     init_cnnpolicynetwork()
-    bottle.run(host='0.0.0.0', port=8080, debug=True)
+    bottle.run(host='0.0.0.0', port=80, debug=True)

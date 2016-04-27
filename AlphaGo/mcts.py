@@ -1,4 +1,8 @@
 import numpy as np
+WHITE = -1
+BLACK = +1
+EMPTY = 0
+PASS_MOVE = None
 
 
 class TreeNode(object):
@@ -79,7 +83,7 @@ class MCTS(object):
 	to the maximum-value policy
 	"""
 
-	def __init__(self, state, value_network, policy_network, rollout_policy, lmbda=0.5, c_puct=5, rollout_limit=500, playout_depth=20, n_search=10000):
+	def __init__(self, state, value_network, policy_network, rollout_policy, lmbda=0.5, c_puct=5, rollout_limit=500, playout_depth=20, n_search=10000, aiColor=BLACK):
 		self.root = TreeNode(None, 1.0)
 		self._value = value_network
 		self._policy = policy_network
@@ -89,6 +93,7 @@ class MCTS(object):
 		self._rollout_limit = rollout_limit
 		self._L = playout_depth
 		self._n_search = n_search
+		self.aiColor = aiColor
 
 	def _DFS(self, nDepth, treenode, state):
 		"""Monte Carlo tree search over a certain depth per simulation, at the end of simulation,
@@ -119,6 +124,8 @@ class MCTS(object):
 		# leaf evaluation
 		v = self._value(state)
 		z = self._evaluate_rollout(state, self._rollout_limit)
+		if self.aiColor != state.current_player:
+			z = -z
 		leaf_value = (1 - self._lmbda) * v + self._lmbda * z
 
 		# update value and visit count of nodes in this traversal
@@ -160,10 +167,10 @@ class MCTS(object):
 
 		# chosen action is the *most visited child*, not the highest-value
 		# (note that they are the same as self._n_search gets large)
-		#return max(self.root.children.iteritems(), key=lambda (a, n): n.nVisits)[0]
+		return max(self.root.children.iteritems(), key=lambda (a, n): n.nVisits)[0]
 
 		#instead , just chosen action with the highest-value
-		return max(self.root.children.iteritems(), key=lambda (a, n): n.toValue())[0]
+		#return max(self.root.children.iteritems(), key=lambda (a, n): n.toValue())[0]
 
 	def update_with_move(self, last_move):
 		"""step forward in the tree and discard everything that isn't still reachable

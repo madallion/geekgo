@@ -47,17 +47,17 @@ class TestMCTS(unittest.TestCase):
 	def setUp(self):
 		self.aiColor = BLACK
 		gs = GameState(size=19)
-		gs.do_move((3, 3))  # B
-		gs.do_move((3, 15))  # W
-		gs.do_move((15, 15))  # B
-		gs.do_move((15, 9))  # W
+		gs.do_move((3, 15))  # B
+		gs.do_move((15, 15))  # W
+		#gs.do_move((15, 15))  # B
+		#gs.do_move((15, 9))  # W
 		self.gs = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network_dummy, policy_network, rollout_policy_random, n_search=10, c_puct = 5, playout_depth = 10, rollout_limit = 10)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, n_search=10, c_puct = 5, playout_depth = 10, rollout_limit = 10)
 
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
@@ -118,7 +118,7 @@ def value_network(state):
 	sgfPath = "d:\\tmp\\%s.value_network.sgf" % sgfId;
 	util.gamestate_to_sgf(state,  sgfPath)
 	t = subprocess.check_output(["cmd.exe", " /c D:\ps\club\Go\geekgo\eval.bat %s" % sgfPath])
-	m = re.search('B:(\d+);W:(\d+)','B:48;W:60\r\n')
+	m = re.search('B:(\d+);W:(\d+)', t)
 	blackImpactScope = float(m.group(1));
 	whiteImpactScope = float(m.group(2));
 	value = blackImpactScope / (blackImpactScope + whiteImpactScope)
@@ -127,6 +127,7 @@ def value_network(state):
 	print (value, state.history[-5:-1])
 	if value < 0:
 		print ("?????????????????? %s" % str(value), state.history)
+	value = value * 50
 	return value
 
 

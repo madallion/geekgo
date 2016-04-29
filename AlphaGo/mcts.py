@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 WHITE = -1
 BLACK = +1
 EMPTY = 0
@@ -8,12 +8,13 @@ PASS_MOVE = None
 class TreeNode(object):
 	"""Tree Representation of MCTS that covers Selection, Expansion, Evaluation, and backUp (aka 'update()')
 	"""
-	def __init__(self, parent, prior_p, c_puct = 5, _lmbda = 0.5):
+	def __init__(self, parent, prior_p, c_puct = 9, lmbda = 0.5):
+		self.lmbda = lmbda
 		self.parent = parent
 		self.nVisits = 1
 		self.P = prior_p
-		self.Q_value = _lmbda * c_puct * self.P
-		self.u_value =  (1 - _lmbda) * c_puct * self.P
+		self.Q_value = 2 * lmbda * c_puct * self.P
+		self.u_value =  (1 - lmbda) * c_puct * self.P
 		self.children = {}
 
 	def expansion(self, actions):
@@ -27,7 +28,7 @@ class TreeNode(object):
 		"""
 		for action, prob in actions:
 			if action not in self.children:
-				self.children[action] = TreeNode(self, prob)
+				self.children[action] = TreeNode(self, prob, lmbda=self.lmbda)
 
 	def selection(self):
 		"""Select among subtree to get the position that gives maximum action value Q plus bonus u(P)
@@ -84,7 +85,7 @@ class MCTS(object):
 	"""
 
 	def __init__(self, state, value_network, policy_network, rollout_policy, lmbda=0.5, c_puct=5, rollout_limit=500, playout_depth=20, n_search=10000, aiColor=BLACK):
-		self.root = TreeNode(None, 1.0)
+		self.root = TreeNode(None, 1.0, lmbda=lmbda)
 		self._value = value_network
 		self._policy = policy_network
 		self._rollout = rollout_policy
@@ -118,13 +119,14 @@ class MCTS(object):
 				break
 			treenode.expansion(action_probs)
 			action, treenode = treenode.selection()
+			print action
 			state.do_move(action)
 			visited[index] = treenode
 
 		# leaf evaluation
 		v = self._value(state)
-		z = self._evaluate_rollout(state, self._rollout_limit)
-		if self.aiColor != state.current_player:
+		z = self._evaluate_rollout(state.copy(), self._rollout_limit)
+		if self.aiColor != z:
 			z = -z
 		leaf_value = (1 - self._lmbda) * v + self._lmbda * z
 
@@ -180,7 +182,7 @@ class MCTS(object):
 			self.root.parent = None
 			# siblings of root will be garbage-collected because they are no longer reachable
 		else:
-			self.root = TreeNode(None, 1.0)
+			self.root = TreeNode(None, 1.0, lmbda=self._lmbda)
 
 
 class ParallelMCTS(MCTS):

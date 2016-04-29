@@ -16,6 +16,12 @@ import AlphaGo.gsm as GameStateMan
 
 from random import shuffle
 
+from AlphaGo import util
+import re
+import subprocess
+
+import uuid
+
 WHITE = -1
 BLACK = +1
 EMPTY = 0
@@ -27,38 +33,32 @@ def init_cnnpolicynetwork():
 	global policy
 	train_folder = 'D:\\ps\\club\\Go'
 	metapath = os.path.join(train_folder, 'all_feat_model.json')
-	#weights_file='D:\ps\club\Go\weights.1sepoch0413.hdf5';
-	weights_file='D:\ps\club\Go\models\weights.00000.hdf5';
+	weights_file='D:\ps\club\Go\models\weights.00008.hdf5';
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
 	arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
 	policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
 	policy.model.load_weights(weights_file);
-	policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+	#policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
 class TestMCTS(unittest.TestCase):
 
 	def setUp(self):
+		self.aiColor = BLACK
 		gs = GameState(size=19)
-		gs.do_move((3, 3))  # B
-		gs.do_move((3, 15))  # W
-		gs.do_move((15, 15))  # B
-		gs.do_move((3, 15))  # W
-		gs.do_move((9, 9))  # B
-		#gs.do_move((9, 10))
-		#gs.do_move((10, 10))		# B
-		#gs.do_move((10, 11))
-		#gs.do_move((11, 11))
-		#gs.do_move((11, 12))	 # B
+		gs.do_move((3, 15))  # B
+		gs.do_move((15, 15))  # W
+		#gs.do_move((15, 15))  # B
+		#gs.do_move((15, 9))  # W
 		self.gs = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, n_search=4)
-
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=30, c_puct = 9, playout_depth = 1, rollout_limit = 10)
+		self.mcts.aiColor = BLACK
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
 	#	self.treenode.expansion(actions)
@@ -76,13 +76,12 @@ class TestMCTS(unittest.TestCase):
 		self.mcts.update_with_move(move)
 		print ('final next move', move);
 
-
 def policy_network(state):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-    res = srtList[0:10]
+    res = srtList[0:30]
     print res
- #  shuffle(res)
+#    shuffle(res)
     return res
 
 def policy_network_random_noEyes(state):
@@ -101,6 +100,7 @@ def policy_network_random_withEyes(state):
 	probs = probs / probs.sum()
 	return zip(moves, probs)
 
+
 def policy_network_random(state):
 	moves = state.get_legal_moves()
 	actions = []
@@ -108,14 +108,31 @@ def policy_network_random(state):
 		actions.append((move, random.uniform(0, 1)))
 	return actions
 
-def value_network(state):
+def value_network_dummy(state):
 	#金角银边草肚皮
 	return 0.5
 
-def rollout_policy_random(state):
-	return policy_network_random(state)
 
-def rollout_policy_score(state):
+def value_network(state):
+	sgfId = str(uuid.uuid4())
+	sgfPath = "d:\\tmp\\%s.value_network.sgf" % sgfId;
+	util.gamestate_to_sgf(state,  sgfPath)
+	t = subprocess.check_output(["cmd.exe", " /c D:\ps\club\Go\geekgo\eval.bat %s" % sgfPath])
+	m = re.search('B:(\d+);W:(\d+)', t)
+	blackImpactScope = float(m.group(1));
+	whiteImpactScope = float(m.group(2));
+	value = blackImpactScope / (blackImpactScope + whiteImpactScope)
+	#if BLACK != state.current_player:
+	#	value = 1 - value
+	value = value
+	print (value, state.history, len(state.history))
+	return value
+
+
+def rollout_policy_random(state):
+	return policy_network_random_noEyes(state)
+
+def rollout_policy(state):
 	nDepth = 3;
 	#let you go first
 	numOfCaptured = 0;

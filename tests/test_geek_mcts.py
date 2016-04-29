@@ -57,8 +57,8 @@ class TestMCTS(unittest.TestCase):
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, n_search=10, c_puct = 5, playout_depth = 10, rollout_limit = 10)
-
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, n_search=10, c_puct = 5, playout_depth = 0, rollout_limit = 10)
+		self.mcts.aiColor = BLACK
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
 	#	self.treenode.expansion(actions)

@@ -60,7 +60,7 @@ class Expert():
 			self.mcts.update_with_move(lastAction)
 
 		#quick move for first 10 steps
-		if len(state.history) < 4:
+		if len(state.history) < 2:
 			moves = self.policy_network(state);
 			move = moves[0][0];
 		else:
@@ -89,7 +89,7 @@ class Expert():
 	    nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
 	    srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
 	    res = srtList[0:30]
-	    #shuffle(res)
+	    shuffle(res)
 	    return res
 
 
@@ -104,7 +104,7 @@ class Expert():
 		value = blackImpactScope / (blackImpactScope + whiteImpactScope)
 		if self.aiColor != state.current_player:
 			value = 1 - value
-		value = value * 999999
+		#value = value 
 		print (value, state.history[-5:-1])
 		return value
 

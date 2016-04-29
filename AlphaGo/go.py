@@ -1,5 +1,5 @@
-import numpy as np
-
+﻿import numpy as np
+import copy
 WHITE = -1
 BLACK = +1
 EMPTY = 0
@@ -164,7 +164,7 @@ class GameState(object):
 		other.turns_played = self.turns_played
 		other.current_player = self.current_player
 		other.ko = self.ko
-		other.history = self.history
+		other.history = copy.copy(self.history)
 		other.num_black_prisoners = self.num_black_prisoners
 		other.num_white_prisoners = self.num_white_prisoners
 
@@ -299,6 +299,8 @@ class GameState(object):
 		If not, an IllegalMove exception is raised
 		"""
 		color = color or self.current_player
+		reset_player = self.current_player
+		self.current_player = color
 		if self.is_legal(action):
 			# reset ko
 			self.ko = None
@@ -339,6 +341,7 @@ class GameState(object):
 			self.turns_played += 1
 			self.history.append(action)
 		else:
+			self.current_player = reset_player
 			raise IllegalMove(str(action))
 
 

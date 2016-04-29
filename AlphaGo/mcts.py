@@ -13,8 +13,8 @@ class TreeNode(object):
 		self.parent = parent
 		self.nVisits = 1
 		self.P = prior_p
-		self.Q_value = 2 * lmbda * c_puct * self.P
-		self.u_value =  (1 - lmbda) * c_puct * self.P
+		self.Q_value = 1
+		self.u_value =  1
 		self.children = {}
 
 	def expansion(self, actions):
@@ -40,7 +40,7 @@ class TreeNode(object):
 		a tuple of (action, next_node)
 		"""
 		for (a, n) in self.children.iteritems():
-			print (a, n.Q_value, n.u_value)
+			print (a, n.Q_value, n.u_value, n.nVisits)
 		return max(self.children.iteritems(), key=lambda (a, n): n.toValue())
 
 	def isLeaf(self):

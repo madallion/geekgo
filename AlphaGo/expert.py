@@ -53,7 +53,8 @@ class Expert():
 
 	def __init__(self, policy, state, aiColor = WHITE):
 		self.policy = policy
-		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, n_search=10, c_puct = 5, playout_depth = 1, rollout_limit = 10)
+		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
+		#self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
 		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
 		if lastAction[0] != -1:
@@ -88,8 +89,8 @@ class Expert():
 	def policy_network(self, state):
 	    nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
 	    srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-	    res = srtList[0:30]
-	    shuffle(res)
+	    res = srtList[0:14]
+	    #shuffle(res)
 	    return res
 
 
@@ -102,7 +103,7 @@ class Expert():
 		blackImpactScope = float(m.group(1));
 		whiteImpactScope = float(m.group(2));
 		value = blackImpactScope / (blackImpactScope + whiteImpactScope)
-		if self.aiColor != state.current_player:
+		if self.aiColor == state.current_player:
 			value = 1 - value
 		#value = value 
 		print (value, state.history[-5:-1])

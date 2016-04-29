@@ -57,7 +57,7 @@ class TestMCTS(unittest.TestCase):
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=30, c_puct = 9, playout_depth = 1, rollout_limit = 10)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
 		self.mcts.aiColor = BLACK
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
@@ -79,7 +79,7 @@ class TestMCTS(unittest.TestCase):
 def policy_network(state):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-    res = srtList[0:30]
+    res = srtList[0:15]
     print res
 #    shuffle(res)
     return res

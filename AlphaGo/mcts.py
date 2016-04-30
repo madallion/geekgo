@@ -14,7 +14,7 @@ class TreeNode(object):
 		self.nVisits = 1
 		self.P = prior_p
 		self.Q_value =  1
-		self.u_value =  prior_p * c_puct
+		self.u_value =  1#prior_p * c_puct * 10
 		self.children = {}
 
 	def expansion(self, actions):

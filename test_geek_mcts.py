@@ -48,8 +48,8 @@ class TestMCTS(unittest.TestCase):
 		self.aiColor = BLACK
 		gs = GameState(size=19)
 		gs.do_move((3, 15))  # B
-		gs.do_move((15, 15))  # W
-		#gs.do_move((15, 15))  # B
+		gs.do_move((15, 3))  # W
+		gs.do_move((15, 15))  # B
 		#gs.do_move((15, 9))  # W
 		self.gs = gs
 		init_cnnpolicynetwork()
@@ -57,8 +57,10 @@ class TestMCTS(unittest.TestCase):
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.75, n_search=90, c_puct = 2.5, playout_depth = 2, rollout_limit = 500)
 		self.mcts.aiColor = BLACK
+		self.mcts.aiColor = WHITE
+
 	#def test_treenode_selection(self):
 	#	actions = self.mcts.priorProb(self.s)
 	#	self.treenode.expansion(actions)
@@ -79,9 +81,11 @@ class TestMCTS(unittest.TestCase):
 def policy_network(state):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-    res = srtList[0:15]
+    res = srtList[0:20]
     print res
-#    shuffle(res)
+    if len(state.history) < 4:
+        res = [((3,16),  0.011963408), ((3,3),  0.014572658)]
+    #shuffle(res)
     return res
 
 def policy_network_random_noEyes(state):
@@ -122,10 +126,10 @@ def value_network(state):
 	blackImpactScope = float(m.group(1));
 	whiteImpactScope = float(m.group(2));
 	value = blackImpactScope / (blackImpactScope + whiteImpactScope)
-	#if BLACK != state.current_player:
-	#	value = 1 - value
+	if BLACK == state.current_player:
+		value = 1 - value
 	value = value
-	print (value, state.history, len(state.history))
+	print (value, state.history, len(state.history), state.current_player)
 	return value
 
 

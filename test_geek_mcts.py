@@ -57,7 +57,7 @@ class TestMCTS(unittest.TestCase):
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.75, n_search=30, c_puct = 5, playout_depth = 2, rollout_limit = 500)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.75, n_search=90, c_puct = 5, playout_depth = 2, rollout_limit = 500)
 		self.mcts.aiColor = BLACK
 		self.mcts.aiColor = WHITE
 
@@ -83,8 +83,8 @@ def policy_network(state, limit=20):
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
     res = srtList[0:limit - 1]
     print res
-    if len(state.history) < 4:
-        res = [((3,16),  0.011963408), ((3,3),  0.014572658)]
+    #if len(state.history) < 4:
+    #    res = [((3,16),  0.011963408), ((3,3),  0.014572658)]
     #shuffle(res)
     return res
 

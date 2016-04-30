@@ -8,13 +8,13 @@ PASS_MOVE = None
 class TreeNode(object):
 	"""Tree Representation of MCTS that covers Selection, Expansion, Evaluation, and backUp (aka 'update()')
 	"""
-	def __init__(self, parent, prior_p, c_puct = 9, lmbda = 0.5):
+	def __init__(self, parent, prior_p, c_puct = 5, lmbda = 0.5):
 		self.lmbda = lmbda
 		self.parent = parent
 		self.nVisits = 1
 		self.P = prior_p
-		self.Q_value = 1
-		self.u_value =  1
+		self.Q_value =  1
+		self.u_value =  prior_p * c_puct
 		self.children = {}
 
 	def expansion(self, actions):
@@ -126,7 +126,7 @@ class MCTS(object):
 		# leaf evaluation
 		v = self._value(state)
 		z = self._evaluate_rollout(state.copy(), self._rollout_limit)
-		if self.aiColor != z:
+		if self.aiColor * z < 0:
 			z = -z
 		leaf_value = (1 - self._lmbda) * v + self._lmbda * z
 
@@ -148,7 +148,8 @@ class MCTS(object):
 		else:
 			# if no break from the loop
 			print "WARNING: rollout reached move limit"
-		return state.get_winner()
+		#return state.get_winner()
+		return state.get_winner_Score() / 200
 
 	def get_move(self, state):
 		"""After running simulations for a certain number of times, when the search is complete, an action is selected

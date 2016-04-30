@@ -57,7 +57,7 @@ class TestMCTS(unittest.TestCase):
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.75, n_search=90, c_puct = 2.5, playout_depth = 2, rollout_limit = 500)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.75, n_search=90, c_puct = 5, playout_depth = 2, rollout_limit = 500)
 		self.mcts.aiColor = BLACK
 		self.mcts.aiColor = WHITE
 
@@ -78,10 +78,10 @@ class TestMCTS(unittest.TestCase):
 		self.mcts.update_with_move(move)
 		print ('final next move', move);
 
-def policy_network(state):
+def policy_network(state, limit=20):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-    res = srtList[0:20]
+    res = srtList[0:limit - 1]
     print res
     if len(state.history) < 4:
         res = [((3,16),  0.011963408), ((3,3),  0.014572658)]
@@ -135,6 +135,9 @@ def value_network(state):
 
 def rollout_policy_random(state):
 	return policy_network_random_noEyes(state)
+
+def rollout_policy_policy(state):
+	return policy_network(state)
 
 def rollout_policy(state):
 	nDepth = 3;

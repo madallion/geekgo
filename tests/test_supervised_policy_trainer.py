@@ -1,4 +1,4 @@
-import os
+﻿import os
 from AlphaGo.training.supervised_policy_trainer import run_training
 import unittest
 
@@ -11,10 +11,10 @@ class TestSupervisedPolicyTrainer(unittest.TestCase):
 		args = [model, data, output, '--epochs', '1']
 		run_training(args)
 
-		os.remove(os.path.join(output, 'metadata.json'))
-		os.remove(os.path.join(output, 'shuffle.npz'))
-		os.remove(os.path.join(output, 'weights.00000.hdf5'))
-		os.rmdir(output)
+		#os.remove(os.path.join(output, 'metadata.json'))
+		#os.remove(os.path.join(output, 'shuffle.npz'))
+		#os.remove(os.path.join(output, 'weights.00000.hdf5'))
+		#os.rmdir(output)
 
 if __name__ == '__main__':
 	unittest.main()

@@ -33,12 +33,13 @@ def init_cnnpolicynetwork():
 	global policy
 	train_folder = 'D:\\ps\\club\\Go'
 	metapath = os.path.join(train_folder, 'all_feat_model.json')
-	weights_file='D:\ps\club\Go\models\weights.00008.hdf5';
+	weights_file='D:\ps\club\Go\models\weights.00000-16layers.hdf5';
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
-	arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
+	arch = {'filters_per_layer': 128} # args to CNNPolicy.create_network()
 	policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
+    policy.model = model_from_json(object_specs['keras_model'])
 	policy.model.load_weights(weights_file);
 	#policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 

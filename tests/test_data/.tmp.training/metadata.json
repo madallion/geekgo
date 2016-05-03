@@ -1,0 +1,1 @@
+{"epochs": [{"acc": 0.0020833333333333333, "loss": 218.64902979532877, "val_acc": 0.0, "val_loss": 211.53948211669922}], "best_epoch": 0, "training_data": "tests/test_data/hdf5/alphago-vs-lee-sedol-features.hdf5", "model_file": "tests/test_data/minimodel.json"}

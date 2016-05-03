@@ -1,5 +1,5 @@
 ﻿
-from AlphaGo.go import GameState
+from AlphaGo.geekgo import GameState
 from AlphaGo.mcts import MCTS
 from AlphaGo.mcts import TreeNode
 import random
@@ -33,13 +33,13 @@ def init_cnnpolicynetwork():
 	global policy
 	train_folder = 'D:\\ps\\club\\Go'
 	metapath = os.path.join(train_folder, 'all_feat_model.json')
-	weights_file='D:\ps\club\Go\models\weights.00000-16layers.hdf5';
+	weights_file='D:\ps\club\Go\models\weights.00000.hdf5';
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
 	arch = {'filters_per_layer': 128} # args to CNNPolicy.create_network()
 	policy = CNNPolicy(feature_list=metadata['feature_list'], **arch);
-    policy.model = model_from_json(object_specs['keras_model'])
+	#policy.model = model_from_json(object_specs['keras_model'])
 	policy.model.load_weights(weights_file);
 	#policy.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 

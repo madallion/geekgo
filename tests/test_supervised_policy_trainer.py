@@ -8,7 +8,7 @@ class TestSupervisedPolicyTrainer(unittest.TestCase):
 		model = 'D:\\ps\\club\\Go\\models\\all_feat_model.json'
 		data = 'D:\ps\club\Go\\.tmp.testing.h5'
 		output = 'tests/test_data/.tmp.training/'
-		args = [model, data, output, '--epochs', '1', '--epoch-length', '20']
+		args = [model, data, output, '--epochs', '1', '--epoch-length', '20', '--learning-rate', '0.2']
 		run_training(args)
 
 		#os.remove(os.path.join(output, 'metadata.json'))

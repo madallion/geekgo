@@ -1,0 +1,1 @@
+{"epochs": [{"acc": 0.0, "loss": 216.78478240966797, "val_acc": 0.0, "val_loss": 195.8031005859375}], "best_epoch": 0, "training_data": "D:\\ps\\club\\Go\\.tmp.testing.h5", "model_file": "D:\\ps\\club\\Go\\models\\all_feat_model.json"}

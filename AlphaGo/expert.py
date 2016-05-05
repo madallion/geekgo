@@ -61,7 +61,7 @@ class Expert():
 			self.mcts.update_with_move(lastAction)
 
 		#quick move for first 10 steps
-		if len(state.history) < 3:
+		if len(state.history) < 30:
 			moves = self.policy_network(state);
 			move = moves[0][0];
 		else:
@@ -90,6 +90,7 @@ class Expert():
 	    nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
 	    srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
 	    res = srtList[0:14]
+	    print res
 	    #shuffle(res)
 	    return res
 

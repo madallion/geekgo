@@ -1,8 +1,8 @@
-import sgf
+﻿import sgf
 import string
 import six.moves.cPickle as pickle
 from AlphaGo import go
-
+import datetime
 
 def flatten_idx(position, size):
 	(x, y) = position
@@ -89,3 +89,31 @@ def gamestate_dump(gamestate, path="d:\tmp\gamestate.gs"):
 	"""
 	output = open(path, 'wb')
 	pickle.dump(gamestate, output)
+
+def gamestate_to_sgf(gamestate,path="d:\\tmp\\gamestate.sgf"):
+    
+    alphabet=['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+    sgf_string = ""
+
+    sgf_string += ";FF[%d]GM[%d]SZ[%d]CA[UTF-8]SO[GeekGo.com]BC[ja]WC[ja]EV[%s]" % (4,1,19,'GeekGo')
+    sgf_string += "PB[%s]BR[%s]" % ('Computer1','9p')
+    sgf_string += "PW[%s]WR[%s]" % ('Computer2','9p')
+    sgf_string += "KM[%f]DT[%s]RE[%s]" % (6.5, datetime.datetime.now().strftime('%Y-%m-%d'),'Unknown')
+    count = 1
+    for (x,y) in gamestate.history:
+        if(count & 1):
+            sgf_string += ";B[%(x)s%(y)s]" % {'x':alphabet[x],'y':alphabet[y]}
+        else:
+            sgf_string += ";W[%(x)s%(y)s]" % {'x':alphabet[x],'y':alphabet[y]}
+        count += 1 
+
+    sgf_string = "(" + sgf_string + ")"
+
+    try:
+        f = open(path,'w')
+        f.write(sgf_string)
+    except:
+        print "Error\n"
+    else:
+        f.close()
+    return sgf_string

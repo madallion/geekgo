@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 WHITE = -1
 BLACK = +1
 EMPTY = 0
@@ -126,7 +126,13 @@ class MCTS(object):
 		# leaf evaluation
 		v = self._value(state)
 		z = self._evaluate_rollout(state.copy(), self._rollout_limit)
-		if self.aiColor * z < 0:
+		# when ai is WHITE, z<0 means WHITE wins
+		#	Color Score EvalValue
+		#   +1	  +1		+1
+		#	+1	  -1		-1
+		#	-1     -1       +1
+		#   -1     +1       -1
+		if self.aiColor == WHITE:
 			z = -z
 		leaf_value = (1 - self._lmbda) * v + self._lmbda * z
 

@@ -1,17 +1,12 @@
-<<<<<<< HEAD
 ﻿import sgf
 import string
 import six.moves.cPickle as pickle
 from AlphaGo import go
 import datetime
-=======
-import sgf
-from AlphaGo import go
 
 # for board location indexing
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
->>>>>>> latest
 
 def flatten_idx(position, size):
 	(x, y) = position
@@ -81,18 +76,20 @@ def sgf_iter_states(sgf_string, include_end=True):
 	collection = sgf.parse(sgf_string)
 	game = collection[0]
 	gs = _sgf_init_gamestate(game.root)
-<<<<<<< HEAD
-	for node in game.rest:
-		props = node.properties
-		if 'W' in props:
-			move = _parse_sgf_move(props['W'][0])
-			player = go.WHITE
-		elif 'B' in props:
-			move = _parse_sgf_move(props['B'][0])
-			player = go.BLACK
-		yield (gs, move, player)
-		# update state to n+1
-		gs.do_move(move, player)
+	if game.rest is not None:
+		for node in game.rest:
+			props = node.properties
+			if 'W' in props:
+				move = _parse_sgf_move(props['W'][0])
+				player = go.WHITE
+			elif 'B' in props:
+				move = _parse_sgf_move(props['B'][0])
+				player = go.BLACK
+			yield (gs, move, player)
+			# update state to n+1
+			gs.do_move(move, player)
+	if include_end:
+		yield (gs, None, None)
 		
 		
 def gamestate_dump(gamestate, path="d:\tmp\gamestate.gs"):
@@ -128,19 +125,3 @@ def gamestate_to_sgf(gamestate,path="d:\\tmp\\gamestate.sgf"):
     else:
         f.close()
     return sgf_string
-=======
-	if game.rest is not None:
-		for node in game.rest:
-			props = node.properties
-			if 'W' in props:
-				move = _parse_sgf_move(props['W'][0])
-				player = go.WHITE
-			elif 'B' in props:
-				move = _parse_sgf_move(props['B'][0])
-				player = go.BLACK
-			yield (gs, move, player)
-			# update state to n+1
-			gs.do_move(move, player)
-	if include_end:
-		yield (gs, None, None)
->>>>>>> latest

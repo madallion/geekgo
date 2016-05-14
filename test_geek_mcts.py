@@ -49,6 +49,7 @@ class TestMCTS(unittest.TestCase):
 		#metapath = 'D:\\ps\\club\\Go\\exp\\2-7win1-17.bug.sgf'
 		#with open(metapath, 'r') as metafile:
 		#	gs = util.sgf_to_gamestate(metafile.read())
+		gs = GameState()
 		gs.do_move((3, 15))  # B
 		gs.do_move((15, 3))  # W
 		gs.do_move((15, 15))  # B

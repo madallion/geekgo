@@ -388,4 +388,3 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
-go.py

@@ -1,4 +1,4 @@
-﻿import numpy as np
+import numpy as np
 
 WHITE = -1
 BLACK = +1

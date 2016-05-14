@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 import os
 import h5py as h5
 import json
@@ -11,7 +11,7 @@ def one_hot_action(action, size=19):
 	"""Convert an (x,y) action into a size x size array of zeros with a 1 at x,y
 	"""
 	categorical = np.zeros((size, size))
-	categorical[action] = 1
+	categorical[action[0], action[1]] = 1
 	return categorical
 
 
@@ -31,7 +31,9 @@ def shuffled_hdf5_batch_generator(state_dataset, action_dataset, indices, batch_
 			# get state from dataset and transform it.
 			# loop comprehension is used so that the transformation acts on the 3rd and 4th dimensions
 			state = np.array([transform(plane) for plane in state_dataset[data_idx]])
-			action = transform(one_hot_action(action_dataset[data_idx], game_size))
+			# must be cast to a tuple so that it is interpreted as (x,y) not [(x,:), (y,:)]
+			action_xy = tuple(action_dataset[data_idx])
+			action = transform(one_hot_action(action_xy, game_size))
 			Xbatch[batch_idx] = state
 			Ybatch[batch_idx] = action.flatten()
 			batch_idx += 1
@@ -50,6 +52,9 @@ class MetadataWriterCallback(Callback):
 		}
 
 	def on_epoch_end(self, epoch, logs={}):
+		# in case appending to logs (resuming training), get epoch number ourselves
+		epoch = len(self.metadata["epochs"])
+
 		self.metadata["epochs"].append(logs)
 
 		if "val_loss" in logs:
@@ -65,16 +70,16 @@ class MetadataWriterCallback(Callback):
 			json.dump(self.metadata, f)
 
 
-BOARD_TRANSFORMATIONS = [
-	lambda feature: feature,
-	lambda feature: np.rot90(feature, 1),
-	lambda feature: np.rot90(feature, 2),
-	lambda feature: np.rot90(feature, 3),
-	lambda feature: np.fliplr(feature),
-	lambda feature: np.flipud(feature),
-	lambda feature: np.transpose(feature),
-	lambda feature: np.fliplr(np.rot90(feature, 1))
-]
+BOARD_TRANSFORMATIONS = {
+	"noop": lambda feature: feature,
+	"rot90": lambda feature: np.rot90(feature, 1),
+	"rot180": lambda feature: np.rot90(feature, 2),
+	"rot270": lambda feature: np.rot90(feature, 3),
+	"fliplr": lambda feature: np.fliplr(feature),
+	"flipud": lambda feature: np.flipud(feature),
+	"diag1": lambda feature: np.transpose(feature),
+	"diag2": lambda feature: np.fliplr(np.rot90(feature, 1))
+}
 
 
 def run_training(cmd_line_args=None):
@@ -92,11 +97,11 @@ def run_training(cmd_line_args=None):
 	parser.add_argument("--epoch-length", "-l", help="Number of training examples considered 'one epoch'. Default: # training data", type=int, default=None)
 	parser.add_argument("--learning-rate", "-r", help="Learning rate - how quickly the model learns at first. Default: .03", type=float, default=.03)
 	parser.add_argument("--decay", "-d", help="The rate at which learning decreases. Default: .0001", type=float, default=.0001)
-	parser.add_argument("--workers", "-w", help="Number of 'workers' workon on batch generator in parallel. Default: 4", type=int, default=4)
 	parser.add_argument("--verbose", "-v", help="Turn on verbose mode", default=False, action="store_true")
 	# slightly fancier args
 	parser.add_argument("--weights", help="Name of a .h5 weights file (in the output directory) to load to resume training", default=None)
 	parser.add_argument("--train-val-test", help="Fraction of data to use for training/val/test. Must sum to 1. Invalid if restarting training", nargs=3, type=float, default=[0.93, .05, .02])
+	parser.add_argument("--symmetries", help="Comma-separated list of transforms, subset of noop,rot90,rot180,rot270,fliplr,flipud,diag1,diag2", default='noop,rot90,rot180,rot270,fliplr,flipud,diag1,diag2')
 	# TODO - an argument to specify which transformations to use, put it in metadata
 
 	if cmd_line_args is None:
@@ -125,8 +130,13 @@ def run_training(cmd_line_args=None):
 	# TODO - (waiting on game_converter) verify that features of model match features of training data
 	dataset = h5.File(args.train_data)
 	n_total_data = len(dataset["states"])
-	n_train_data = np.floor(args.train_val_test[0] * n_total_data)
-	n_val_data = np.floor(args.train_val_test[1] * n_total_data)
+<<<<<<< HEAD
+	n_train_data = np.floor(args.train_val_test[0] * n_total_data) - 1
+	n_val_data = np.floor(args.train_val_test[1] * n_total_data) + 1
+=======
+	n_train_data = int(args.train_val_test[0] * n_total_data)
+	n_val_data = int(args.train_val_test[1] * n_total_data)
+>>>>>>> latest
 	# n_test_data = n_total_data - (n_train_data + n_val_data)
 
 	if args.verbose:
@@ -147,7 +157,7 @@ def run_training(cmd_line_args=None):
 		with open(meta_file, "r") as f:
 			meta_writer.metadata = json.load(f)
 		if args.verbose:
-			print "previous metadata loadeda: %d epochs. new epochs will be appended." % len(meta_writer.metadata["epochs"])
+			print "previous metadata loaded: %d epochs. new epochs will be appended." % len(meta_writer.metadata["epochs"])
 	elif args.verbose:
 		print "starting with empty metadata"
 	# the MetadataWriterCallback only sets 'epoch' and 'best_epoch'. We can add in anything else we like here
@@ -180,22 +190,24 @@ def run_training(cmd_line_args=None):
 	val_indices = shuffle_indices[n_train_data:n_train_data + n_val_data]
 	# test_indices = shuffle_indices[n_train_data + n_val_data:]
 
+	symmetries = [BOARD_TRANSFORMATIONS[name] for name in args.symmetries.strip().split(",")]
+
 	# create dataset generators
 	train_data_generator = shuffled_hdf5_batch_generator(
 		dataset["states"],
 		dataset["actions"],
 		train_indices,
 		args.minibatch,
-		BOARD_TRANSFORMATIONS)
+		symmetries)
 	val_data_generator = shuffled_hdf5_batch_generator(
 		dataset["states"],
 		dataset["actions"],
 		val_indices,
 		args.minibatch,
-		BOARD_TRANSFORMATIONS)
+		symmetries)
 
 	sgd = SGD(lr=args.learning_rate, decay=args.decay)
-	model.compile(loss='categorical_crossentropy', optimizer=sgd)
+	model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=["accuracy"])
 
 	samples_per_epoch = args.epoch_length or n_train_data
 
@@ -208,9 +220,7 @@ def run_training(cmd_line_args=None):
 		nb_epoch=args.epochs,
 		callbacks=[checkpointer, meta_writer],
 		validation_data=val_data_generator,
-		nb_val_samples=n_val_data,
-		show_accuracy=True,
-		nb_worker=args.workers)
+		nb_val_samples=n_val_data)
 
 if __name__ == '__main__':
 	run_training()

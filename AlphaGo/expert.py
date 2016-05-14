@@ -53,7 +53,7 @@ class Expert():
 
 	def __init__(self, policy, state, aiColor = WHITE):
 		self.policy = policy
-		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.25, n_search=20, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
+		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=50, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
 		#self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
 		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
@@ -74,23 +74,12 @@ class Expert():
 			move = self.mcts.get_move(state)
 
 		self.mcts.update_with_move(move)
+		
+		sgfId = "debug"
+		sgfPath = "d:\\tmp\\%s.value_network.sgf" % sgfId;
+		util.gamestate_to_sgf(state,  sgfPath)
+
 		return move
-
-		## update the tree		
-		#if lastAction[0] != -1:
-		#	if lastAction not in self.mcts.treenode.children:
-		#		self.mcts.treenode.expansion([(lastAction, 0.5)])
-		#		self.mcts.treenode.updateU_value([(lastAction, 0.5)])
-		#	self.mcts.state.do_move(lastAction)
-		#	self.mcts.treenode = self.mcts.treenode.children[lastAction]
-
-		#nextAction = self.mcts.getMove(3, 10)
-		#self.mcts.state.do_move(nextAction)
-
-		#if nextAction not in self.mcts.treenode.children:
-		#	self.mcts.treenode.expansion([(nextAction, 0.5)])
-		#	self.mcts.treenode.updateU_value([(nextAction, 0.5)])
-		#self.mcts.treenode = self.mcts.treenode.children[nextAction] #drop previous root node
 
 	def policy_network(self, state):
 	    nextMoveList = self.policy.eval_state(state, state.get_legal_moves())

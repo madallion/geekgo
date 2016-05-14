@@ -33,7 +33,7 @@ def init_cnnpolicynetwork():
 	global policy
 	train_folder = 'D:\\ps\\club\\Go'
 	metapath = os.path.join(train_folder, 'all_feat_model.json')
-	weights_file='D:\ps\club\Go\models\weights.redoSl-1epoch.hdf5';
+	weights_file='D:\ps\club\Go\models\weights.redoSl-4thepoch.hdf5';
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
@@ -45,19 +45,21 @@ def init_cnnpolicynetwork():
 class TestMCTS(unittest.TestCase):
 
 	def setUp(self):
-		self.aiColor = BLACK
-		gs = GameState(size=19)
+		self.aiColor = WHITE
+		#metapath = 'D:\\ps\\club\\Go\\exp\\2-7win1-17.bug.sgf'
+		#with open(metapath, 'r') as metafile:
+		#	gs = util.sgf_to_gamestate(metafile.read())
 		gs.do_move((3, 15))  # B
 		gs.do_move((15, 3))  # W
 		gs.do_move((15, 15))  # B
-		#gs.do_move((15, 9))  # W
 		self.gs = gs
 		init_cnnpolicynetwork()
 		gsm = GameStateMan.GameStateManager(policy)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
-		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.75, n_search=90, c_puct = 5, playout_depth = 2, rollout_limit = 500)
+		self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=50, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
+		#self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.75, n_search=20, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
 		self.mcts.aiColor = BLACK
 		self.mcts.aiColor = WHITE
 
@@ -78,7 +80,7 @@ class TestMCTS(unittest.TestCase):
 		self.mcts.update_with_move(move)
 		print ('final next move', move);
 
-def policy_network(state, limit=20):
+def policy_network(state, limit = 8):
     nextMoveList = policy.eval_state(state, state.get_legal_moves())
     srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
     res = srtList[0:limit - 1]

@@ -23,14 +23,14 @@ POLICY = None
 def init_cnnpolicynetwork():
     global POLICY
 
-    #train_folder = '/home/yimlin/betago_workspace/deploy'
-    train_folder = 'D:\ps\club\Go\models'
+    train_folder = '/home/yimlin/betago_workspace/deploy'
+    #train_folder = 'D:\ps\club\Go\models'
     metapath = os.path.join(train_folder, 'all_feat_model.json')
 
     with open(metapath) as metafile:
         metadata = json.load(metafile)
 
-    weights_file = os.path.join(train_folder, 'weights.redoSl-0epoch.hdf5')
+    weights_file = os.path.join(train_folder, 'weights.models_redoSL-continueOn8thEpoch_20160509.hdf5')
     arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
     POLICY = CNNPolicy(feature_list=metadata['feature_list'], **arch)
     POLICY.model.load_weights(weights_file)

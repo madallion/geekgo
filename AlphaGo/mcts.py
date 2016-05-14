@@ -155,7 +155,7 @@ class MCTS(object):
 			# if no break from the loop
 			print "WARNING: rollout reached move limit"
 		#return state.get_winner()
-		return state.get_winner_Score() / 200
+		return state.get_winner_Score() / 100
 
 	def get_move(self, state):
 		"""After running simulations for a certain number of times, when the search is complete, an action is selected

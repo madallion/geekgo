@@ -1,4 +1,4 @@
-import sgf﻿
+﻿import sgf
 import string
 import six.moves.cPickle as pickle
 from AlphaGo import go

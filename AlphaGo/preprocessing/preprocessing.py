@@ -1,9 +1,7 @@
+﻿"""Functions for converting from GameState objects to 1-hot encoded features.
+"""
 import numpy as np
 import AlphaGo.go as go
-
-##
-## individual feature functions (state --> tensor) begin here
-##
 
 
 def get_board(state):
@@ -62,7 +60,7 @@ def get_liberties(state, maximum=8):
 
 
 def get_capture_size(state, maximum=8):
-	"""A feature encoding the number of opponent stones that would be captured by playing at each location,
+	"""A feature encoding the number of opponent stones that would be captured by planing at each location,
 	up to 'maximum'
 
 	Note:
@@ -98,7 +96,6 @@ def get_self_atari_size(state, maximum=8):
 		lib_set_after = set(state.liberty_sets[x][y])
 		group_set_after = set()
 		group_set_after.add((x, y))
-		captured_stones = set()
 		for neighbor_group in state.get_groups_around((x, y)):
 			# if the neighboring group is of the same color as the current player
 			# then playing here will connect this stone to that group
@@ -106,16 +103,6 @@ def get_self_atari_size(state, maximum=8):
 			if state.board[gx, gy] == state.current_player:
 				lib_set_after |= state.liberty_sets[gx][gy]
 				group_set_after |= state.group_sets[gx][gy]
-			# if instead neighboring group is opponent *and about to be captured*
-			# then we might gain new liberties
-			elif state.liberty_counts[gx][gy] == 1:
-				captured_stones |= state.group_sets[gx][gy]
-		# add captured stones to liberties if they are neighboring the 'group_set_after'
-		# i.e. if they will become liberties once capture is resolved
-		if len(captured_stones) > 0:
-			for (gx, gy) in group_set_after:
-				# intersection of group's neighbors and captured stones will become liberties
-				lib_set_after |= set(state._neighbors((gx, gy))) & captured_stones
 		if (x, y) in lib_set_after:
 			lib_set_after.remove((x, y))
 		# check if this move resulted in atari
@@ -140,9 +127,6 @@ def get_liberties_after(state, maximum=8):
 	for (x, y) in state.get_legal_moves():
 		# make a copy of the set of liberties at (x,y) so we can add to it
 		lib_set_after = set(state.liberty_sets[x][y])
-		group_set_after = set()
-		group_set_after.add((x, y))
-		captured_stones = set()
 		for neighbor_group in state.get_groups_around((x, y)):
 			# if the neighboring group is of the same color as the current player
 			# then playing here will connect this stone to that group and
@@ -150,17 +134,6 @@ def get_liberties_after(state, maximum=8):
 			(gx, gy) = next(iter(neighbor_group))
 			if state.board[gx, gy] == state.current_player:
 				lib_set_after |= state.liberty_sets[gx][gy]
-				group_set_after |= state.group_sets[gx][gy]
-			# if instead neighboring group is opponent *and about to be captured*
-			# then we might gain new liberties
-			elif state.liberty_counts[gx][gy] == 1:
-				captured_stones |= state.group_sets[gx][gy]
-		# add captured stones to liberties if they are neighboring the 'group_set_after'
-		# i.e. if they will become liberties once capture is resolved
-		if len(captured_stones) > 0:
-			for (gx, gy) in group_set_after:
-				# intersection of group's neighbors and captured stones will become liberties
-				lib_set_after |= set(state._neighbors((gx, gy))) & captured_stones
 		# (x,y) itself may have made its way back in, but shouldn't count
 		# since it's clearly not a liberty after playing there
 		if (x, y) in lib_set_after:
@@ -230,6 +203,11 @@ FEATURES = {
 	"zeros": {
 		"size": 1,
 		"function": lambda state: np.zeros((1, state.size, state.size))
+	},
+	"color": {
+		"size": 1,
+		"function": lambda state: np.ones((1, state.size, state.size)) *
+		(state.current_player == go.BLACK)
 	}
 }
 

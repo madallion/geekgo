@@ -102,6 +102,7 @@ def play_batch(player_RL, player_SL, batch_size, features):
         if all(done):
             break
     # Concatenate training examples
+    X = None
     if X_list is not None:
         X = convert(X_list, preprocessor)
     winners = np.array([st.get_winner() for st in states]).reshape(batch_size, 1)

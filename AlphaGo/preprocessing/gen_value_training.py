@@ -1,4 +1,4 @@
-import argparse
+﻿import argparse
 from AlphaGo.ai import ProbabilisticPolicyPlayer
 from AlphaGo.go import GameState
 from AlphaGo.models.policy import CNNPolicy
@@ -8,10 +8,7 @@ import numpy as np
 import os
 import warnings
 
-
-def init_hdf5(out_pth, n_features, bd_size):
-    tmp_file = os.path.join(os.path.dirname(out_pth), ".tmp." + os.path.basename(out_pth))
-    h5f = h5py.File(tmp_file, 'w')
+def init_hdf5(out_pth, n_features, bd_size, h5f):
     try:
         states = h5f.require_dataset(
             'states',
@@ -30,8 +27,10 @@ def init_hdf5(out_pth, n_features, bd_size):
             chunks=(1024, 1),
             compression="lzf")
     except Exception as e:
-        os.remove(tmp_file)
+        #os.remove(tmp_file)
         raise e
+    #h5f.close()
+    #os.rename(tmp_file, out_pth)
     return states, winners
 
 
@@ -111,8 +110,11 @@ def play_batch(player_RL, player_SL, batch_size, features):
 def run(player_RL, player_SL, out_pth, n_training_pairs, batch_size,
         bd_size, features):
     n_features = Preprocess(features).output_dim
+    tmp_file = os.path.join(os.path.dirname(out_pth), ".tmp." + os.path.basename(out_pth))
+    h5f = h5py.File(tmp_file, 'w')
+    
     h5_states, h5_winners = init_hdf5(out_pth, n_features,
-                                      bd_size)
+                                      bd_size, h5f)
     next_idx = 0
     n_pairs = 0
     while True:  # n in xrange(n_training_pairs / batch_size):
@@ -133,6 +135,8 @@ def run(player_RL, player_SL, out_pth, n_training_pairs, batch_size,
         n_pairs += 1
         if n_pairs >= n_training_pairs / batch_size:
             break
+    h5f.close()
+    os.rename(tmp_file, out_pth)
     return
 
 
@@ -144,12 +148,12 @@ if __name__ == '__main__':
                                      'network are generated from the outcome in each '
                                      'games, following an off-policy, uniform random move')
     parser.add_argument("SL_weights_path", help="Path to file with supervised "
-                        "learning policy weights.")
+                        "learning policy weights.", default="d:\ps\club\go\models\tomSL.00010.hdf5")
     parser.add_argument("RL_weights_path", help="Path to file with reinforcement "
-                        "learning policy weights.")
-    parser.add_argument("model_path", help="Path to network architecture file.")
+                        "learning policy weights.", default="d:\ps\club\go\models\tomRL.19.hdf5")
+    parser.add_argument("model_path", help="Path to network architecture file.", default="d:\ps\club\go\models\46feats_model_0515.json")
     parser.add_argument("--out_pth", "-o", help="Path to where the training "
-                        "pairs will be saved. Default: None", default=None)
+                        "pairs will be saved. Default: None", default="d:\ps\club\go\gen_value_training_out\outFile.h5")
     parser.add_argument("--load_from_file", help="Path to HDF5 file to continue from."
                         " Default: None", default=None)
     parser.add_argument(

@@ -1,6 +1,6 @@
 ﻿import numpy as np
 from AlphaGo.expert import Expert
-from AlphaGo.go import GameState
+from AlphaGo.geekgo import GameState
 
 WHITE = -1
 BLACK = +1

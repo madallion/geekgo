@@ -1,7 +1,7 @@
 ﻿
 from AlphaGo.go import GameState
-from AlphaGo.mcts import MCTS
-from AlphaGo.mcts import TreeNode
+from AlphaGo.geek_mcts import ParallelMCTS
+from AlphaGo.geek_mcts import TreeNode
 import random
 import unittest
 
@@ -29,9 +29,10 @@ def policy_network_random_noEyes(state):
 	moves = state.get_legal_moves(include_eyes=False)
 	# 'random' distribution over positions that is smallest
 	# at (0,0) and largest at (18,18)
-	probs = np.arange(361, dtype=np.float)
-	probs = probs / probs.sum()
-	return zip(moves, probs)
+	actions = []
+	for move in moves:
+		actions.append((move, random.uniform(0, 1)))
+	return actions
 
 def policy_network_random_withEyes(state):
 	moves = state.get_legal_moves(include_eyes=True)
@@ -53,7 +54,8 @@ class Expert():
 
 	def __init__(self, policy, state, aiColor = WHITE):
 		self.policy = policy
-		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=50, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
+		#self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=50, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
+		self.mcts = ParallelMCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=1, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
 		#self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
 		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
@@ -65,12 +67,14 @@ class Expert():
 		#quick move for first 10 steps
 		steps = len(state.history)
 		diff = moves[0][1] - moves[1][1]
-		if steps < 10 or diff > 0.15:
+		if steps < 2 or diff > 0.15:
 			move = moves[0][0];
 		else:
 			self.mcts._n_search += np.floor(steps * 0.5)
 			self.mcts._n_search -= np.floor(diff * 30)
 			self.mcts._n_search = int(self.mcts._n_search)
+
+			self.mcts._n_search = 1 #paralleled mcts hard code
 			move = self.mcts.get_move(state)
 
 		self.mcts.update_with_move(move)

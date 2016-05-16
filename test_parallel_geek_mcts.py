@@ -1,6 +1,6 @@
 ﻿
 from AlphaGo.geekgo import GameState
-from AlphaGo.geek_mcts import MCTS
+from AlphaGo.geek_mcts import ParallelMCTS
 from AlphaGo.geek_mcts import TreeNode
 import random
 import unittest
@@ -63,7 +63,7 @@ class TestMCTS(unittest.TestCase):
 			gs = geek_util.sgf_to_gamestate(metafile.read())
 		self.aiColor = BLACK
 		self.gs = gs
-		self.mcts = MCTS(self.gs, self.value_network, self.policy_network, self.rollout_policy_random, lmbda=1.0, n_search=10, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
+		self.mcts = ParallelMCTS(self.gs, self.value_network_dummy, self.policy_network, self.rollout_policy_random, lmbda=1.0, n_search=1, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
 		self.mcts.aiColor = self.aiColor
 		
 		#gs = GameState()

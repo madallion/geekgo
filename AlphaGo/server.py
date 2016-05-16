@@ -11,8 +11,8 @@ from keras.callbacks import ModelCheckpoint
 
 # local modules
 from AlphaGo.models.policy import CNNPolicy
-import go
-import gsm as GameStateMan
+import AlphaGo.geekgo
+import AlphaGo.gsm as GameStateMan
 
 # global variables
 DEBUG = True
@@ -23,8 +23,8 @@ POLICY = None
 def init_cnnpolicynetwork():
     global POLICY
 
-    train_folder = '/home/yimlin/betago_workspace/deploy'
-    #train_folder = 'D:\ps\club\Go\models'
+    #train_folder = '/home/yimlin/betago_workspace/deploy'
+    train_folder = 'D:\ps\club\Go\models'
     metapath = os.path.join(train_folder, 'all_feat_model.json')
 
     with open(metapath) as metafile:

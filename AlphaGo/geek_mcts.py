@@ -11,10 +11,10 @@ class TreeNode(object):
 	def __init__(self, parent, prior_p, c_puct = 5, lmbda = 0.5):
 		self.lmbda = lmbda
 		self.parent = parent
-		self.nVisits = 0
+		self.nVisits = 1
 		self.P = prior_p
-		self.Q_value =  0
-		self.u_value =  prior_p#prior_p * c_puct * 10
+		self.Q_value =  1
+		self.u_value =  1 #prior_p * c_puct * 10
 		self.children = {}
 #=======
 #	def __init__(self, parent, prior_p):

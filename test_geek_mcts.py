@@ -1,5 +1,5 @@
 ﻿
-from AlphaGo.go import GameState
+from AlphaGo.geekgo import GameState
 from AlphaGo.mcts import MCTS
 from AlphaGo.mcts import TreeNode
 import random

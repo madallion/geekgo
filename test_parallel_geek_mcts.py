@@ -44,7 +44,7 @@ def init_cnnpolicynetwork():
 
 def init_cnnValueNetwork():
 	from AlphaGo.models.value import CNNValue
-	global value_net
+	global VALUENET
 	train_folder = 'D:\\ps\\club\\Go\\models'
 	metapath = os.path.join(train_folder, 'value_model.json')
 	weights_file=os.path.join(train_folder, 'value.100games.weights.00009-bugfixed.hdf5');
@@ -52,8 +52,13 @@ def init_cnnValueNetwork():
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
 	arch = {'filters_per_layer': 128} # args to CNNPolicy.create_network()
-	value_net = CNNValue.load_model(metapath)
-	value_net.model.load_weights(weights_file);
+	VALUENET = CNNValue.load_model(metapath)
+	VALUENET.model.load_weights(weights_file);
+
+def value_network(state):
+	value = VALUENET.eval_state(state)
+	print (value, state.history, len(state.history), state.current_player)
+	return value	
 
 class TestMCTS(unittest.TestCase):
 
@@ -63,7 +68,7 @@ class TestMCTS(unittest.TestCase):
 			gs = geek_util.sgf_to_gamestate(metafile.read())
 		self.aiColor = BLACK
 		self.gs = gs
-		self.mcts = ParallelMCTS(self.gs, self.value_network_dummy, self.policy_network, self.rollout_policy_random, lmbda=1.0, n_search=1, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
+		self.mcts = ParallelMCTS(self.gs, self.value_network, self.policy_network, self.rollout_policy_random, lmbda=0.5, n_search=1, c_puct = 2.5, playout_depth = 5, rollout_limit = 500)
 		self.mcts.aiColor = self.aiColor
 		
 		#gs = GameState()
@@ -73,7 +78,7 @@ class TestMCTS(unittest.TestCase):
 		#self.mcts.aiColor = WHITE
 		init_cnnValueNetwork()
 		init_cnnpolicynetwork()
-		gsm = GameStateMan.GameStateManager(policy)
+		gsm = GameStateMan.GameStateManager(policy, VALUENET)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
@@ -140,7 +145,7 @@ class TestMCTS(unittest.TestCase):
 
 
 	def value_network(self, state):
-		value = value_net.eval_state(state)
+		value = VALUENET.eval_state(state)
 		if self.aiColor == WHITE:
 			value = 1 - value
 		print (value, state.history, len(state.history), state.current_player)

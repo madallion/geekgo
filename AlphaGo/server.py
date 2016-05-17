@@ -22,21 +22,21 @@ POLICY = None
 
 def init_cnnpolicynetwork():
     global POLICY
-
     #train_folder = '/home/yimlin/betago_workspace/deploy'
-    train_folder = 'D:\ps\club\Go\models'
-    metapath = os.path.join(train_folder, 'all_feat_model.json')
-
-    with open(metapath) as metafile:
-        metadata = json.load(metafile)
-
+    train_folder = 'D:\\ps\\club\\Go\\models'
+    metapath = os.path.join(train_folder, '46feats_model_0515.json')
     weights_file = os.path.join(train_folder, 'weights.models_redoSL-continueOn8thEpoch_20160509.hdf5')
-    arch = {'filters_per_layer': 128, 'layers': 12} # args to CNNPolicy.create_network()
-    POLICY = CNNPolicy(feature_list=metadata['feature_list'], **arch)
-    POLICY.model.load_weights(weights_file)
-    #POLICY.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+    POLICY = CNNPolicy.load_model(metapath);
+    POLICY.model.load_weights(weights_file);
 
-init_cnnpolicynetwork()
+def init_cnnValueNetwork():
+	from AlphaGo.models.value import CNNValue
+	global VALUENET
+	train_folder = 'D:\\ps\\club\\Go\\models'
+	metapath = os.path.join(train_folder, 'value_model.json')
+	weights_file=os.path.join(train_folder, 'value.100games.weights.00009-bugfixed.hdf5');
+	VALUENET = CNNValue.load_model(metapath)
+	VALUENET.model.load_weights(weights_file);
 
 
 @route('/move', method='OPTIONS')
@@ -62,7 +62,7 @@ def move():
 
     # retrieve or create GameStateManager
     if session_id not in GSM_POOL:
-        gsm = GameStateMan.GameStateManager(POLICY)
+        gsm = GameStateMan.GameStateManager(POLICY, VALUENET)
         GSM_POOL[session_id] = gsm
     else:
         gsm = GSM_POOL[session_id]
@@ -80,4 +80,5 @@ def move():
 
 if __name__ == "__main__":
     init_cnnpolicynetwork()
+    init_cnnValueNetwork()
     bottle.run(host='0.0.0.0', port=80, debug=True)

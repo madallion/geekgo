@@ -1,5 +1,10 @@
 ﻿import numpy as np
 import random
+from AlphaGo import geek_util
+import uuid
+import subprocess
+import re
+
 WHITE = -1
 BLACK = +1
 EMPTY = 0
@@ -7,20 +12,24 @@ PASS_MOVE = None
 import multiprocessing
 from multiprocessing.pool import Pool
 
-#def value_network(state):
-#	sgfId = str(uuid.uuid4())
-#	sgfPath = "d:\\tmp\\%s.value_network.sgf" % sgfId;
-#	util.gamestate_to_sgf(state,  sgfPath)
-#	t = subprocess.check_output(["cmd.exe", " /c D:\ps\club\Go\eval.bat %s" % sgfPath])
-#	m = re.search('B:(\d+);W:(\d+)', t)
-#	blackImpactScope = float(m.group(1));
-#	whiteImpactScope = float(m.group(2));
-#	value = blackImpactScope / (blackImpactScope + whiteImpactScope)
-#	if self.aiColor != state.current_player:
-#		value = 1 - value
-#	#value = value 
-#	print (value, state.history[-5:-1])
-#	return value
+def value_network_java(state):
+	sgfId = str(uuid.uuid4())
+	sgfPath = "d:\\tmp\\%s.value_network.sgf" % sgfId;
+	geek_util.gamestate_to_sgf(state,  sgfPath)
+	t = subprocess.check_output(["cmd.exe", " /c D:\ps\club\Go\eval.bat %s" % sgfPath])
+	m = re.search('B:(\d+);W:(\d+)', t)
+	blackImpactScope = float(m.group(1));
+	whiteImpactScope = float(m.group(2));
+	value = blackImpactScope / (blackImpactScope + whiteImpactScope)
+	
+	#value = value 
+	print (value, state.history[-5:-1])
+	return value
+
+def value_network(state):
+	value = VALUENET.eval_state(state)
+	print (value, state.history, len(state.history), state.current_player)
+	return value	
 
 def value_network_dummy(state):
 	#金角银边草肚皮
@@ -52,7 +61,7 @@ def evaluate_rollout(state, rolloutPolicy = policy_network_random_noEyes, limit 
 
 
 
-def mcplayout(state, valueFunc = value_network_dummy, rolloutFunc = evaluate_rollout, aiColor = WHITE, lmbda = 0.5):
+def mcplayout(state, valueFunc = value_network_dummy, rolloutFunc = evaluate_rollout, aiColor = BLACK, lmbda = 0.5):
 	# leaf evaluation
 	v = valueFunc(state)
 	z = rolloutFunc(state.copy(), policy_network_random_noEyes)
@@ -64,7 +73,9 @@ def mcplayout(state, valueFunc = value_network_dummy, rolloutFunc = evaluate_rol
 	#   -1     +1       -1
 	if aiColor == WHITE:
 		z = -z
-	leaf_value = (1 - lmbda) * v + lmbda * z
+		v = 1 - v
+
+	leaf_value = (1 - lmbda) * v + lmbda * z  + v * z
 	return 	leaf_value
 
 
@@ -283,6 +294,8 @@ class ParallelMCTS(MCTS):
 	def __init__(self, state, value_network, policy_network, rollout_policy, lmbda=0.5, c_puct=5, rollout_limit=500, playout_depth=20, n_search=10000, aiColor=BLACK):
 		self.root = TreeNode(None, 1.0, lmbda=lmbda)
 		self._value = value_network
+		global VALUE_NETWORK
+		VALUE_NETWORK = value_network
 		self._policy = policy_network
 		self._rollout = rollout_policy
 		self._lmbda = lmbda
@@ -315,11 +328,13 @@ class ParallelMCTS(MCTS):
 		visitedNodes = [None] * nDepth
 		
 		i = 0
+		j = 0
 		n = 100
+		m = 30
 		while i < n:
 			stateCopy = state.copy();
 			treenodeCopy = treeRoot;
-			if not outgoing and not (isDebug and ongoing):
+			if not outgoing and not (isDebug and ongoing) and j < m:
 				nodes = []
 				# Playout to nDepth moves using the full policy network
 				for index in xrange(nDepth):
@@ -336,17 +351,23 @@ class ParallelMCTS(MCTS):
 							break
 						stateCopy.do_move(action)
 						visitedNodes[index] = treenodeCopy
+						treenodeCopy.Q_value -= 10
 				outgoing.append((visitedNodes, state))
 
 			if len(ongoing) >= n_workers:
 					# Too many playouts running? Wait a bit...
 					ongoing[0][0].wait(0.01 / n_workers)
-			else:
+			elif len(outgoing) > 0:
 				i += 1
+				j += 1
 				nodes, gs = outgoing.pop()
 				atask = worker_pool.apply_async(mcplayout, (gs, value_network_dummy))
 				#nodes are the treenodes in one path
 				ongoing.append((atask, nodes))
+			elif len(outgoing) == 0 and len(ongoing) > 0:
+				ongoing[0][0].wait(100)
+			else:
+				i += 1
 
 			# Anything to store in the tree?  (We do this step out-of-order
 			# picking up data from the previous round so that we don't stall
@@ -354,6 +375,7 @@ class ParallelMCTS(MCTS):
 			while incoming:
 				leaf_value, visitedNodes = incoming.pop()
 				for node in visitedNodes:
+					node.Q_value += 10
 					node.update(leaf_value, self._c_puct)
 		
 			# Any playouts are finished yet?
@@ -365,7 +387,8 @@ class ParallelMCTS(MCTS):
 				incoming.append((leaf_value, nodes))
 				ongoing.remove((job, nodes))
 
-
+		# close process
+		worker_pool.close()
 		# update value and visit count of nodes in this traversal
 		# Note: it is important that this happens from the root downward
 		# so that 'parent' visit counts are correct
@@ -404,7 +427,7 @@ class ParallelMCTS(MCTS):
 		for n in xrange(0, self._n_search):
 			state_copy = state.copy()
 			self._DFS(self._L, self.root, state_copy)
-
+		worker_pool = None
 		# chosen action is the *most visited child*, not the highest-value
 		# (note that they are the same as self._n_search gets large)
 		return max(self.root.children.iteritems(), key=lambda (a, n): n.nVisits)[0]

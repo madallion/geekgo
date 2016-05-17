@@ -11,6 +11,9 @@ EMPTY = 0
 PASS_MOVE = None
 import multiprocessing
 from multiprocessing.pool import Pool
+#from parallel_network_init import init_cnnValueNetwork, value_network;
+#global VALUE_NET
+#VALUE_NET = init_cnnValueNetwork()
 
 def value_network_java(state):
 	sgfId = str(uuid.uuid4())
@@ -26,10 +29,11 @@ def value_network_java(state):
 	print (value, state.history[-5:-1])
 	return value
 
-def value_network(state):
-	value = VALUENET.eval_state(state)
-	print (value, state.history, len(state.history), state.current_player)
-	return value	
+
+#def value_network(state):
+#	value = VALUENET.eval_state(state)
+#	print (value, state.history, len(state.history), state.current_player)
+#	return value	
 
 def value_network_dummy(state):
 	#金角银边草肚皮
@@ -63,6 +67,7 @@ def evaluate_rollout(state, rolloutPolicy = policy_network_random_noEyes, limit 
 
 def mcplayout(state, valueFunc = value_network_dummy, rolloutFunc = evaluate_rollout, aiColor = BLACK, lmbda = 0.5):
 	# leaf evaluation
+	#v = valueFunc(state, VALUE_NET)
 	v = valueFunc(state)
 	z = rolloutFunc(state.copy(), policy_network_random_noEyes)
 	# when ai is WHITE, z<0 means WHITE wins
@@ -75,7 +80,8 @@ def mcplayout(state, valueFunc = value_network_dummy, rolloutFunc = evaluate_rol
 		z = -z
 		v = 1 - v
 
-	leaf_value = (1 - lmbda) * v + lmbda * z  + v * z
+	#leaf_value = (1 - lmbda) * v + lmbda * z  + v * z
+	leaf_value = (1 - lmbda) * v + lmbda * z 
 	return 	leaf_value
 
 
@@ -330,7 +336,7 @@ class ParallelMCTS(MCTS):
 		i = 0
 		j = 0
 		n = 100
-		m = 30
+		m = 80
 		while i < n:
 			stateCopy = state.copy();
 			treenodeCopy = treeRoot;
@@ -361,7 +367,7 @@ class ParallelMCTS(MCTS):
 				i += 1
 				j += 1
 				nodes, gs = outgoing.pop()
-				atask = worker_pool.apply_async(mcplayout, (gs, value_network_dummy))
+				atask = worker_pool.apply_async(mcplayout, (gs, value_network_dummy, evaluate_rollout, self.aiColor, self._lmbda))
 				#nodes are the treenodes in one path
 				ongoing.append((atask, nodes))
 			elif len(outgoing) == 0 and len(ongoing) > 0:

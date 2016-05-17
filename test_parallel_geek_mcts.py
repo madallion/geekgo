@@ -58,7 +58,7 @@ def init_cnnValueNetwork():
 def value_network(state):
 	value = VALUENET.eval_state(state)
 	print (value, state.history, len(state.history), state.current_player)
-	return value	
+	return value[0]	
 
 class TestMCTS(unittest.TestCase):
 
@@ -68,7 +68,7 @@ class TestMCTS(unittest.TestCase):
 			gs = geek_util.sgf_to_gamestate(metafile.read())
 		self.aiColor = BLACK
 		self.gs = gs
-		self.mcts = ParallelMCTS(self.gs, self.value_network, self.policy_network, self.rollout_policy_random, lmbda=0.5, n_search=1, c_puct = 2.5, playout_depth = 5, rollout_limit = 500)
+		self.mcts = ParallelMCTS(self.gs, self.value_network, self.policy_network, self.rollout_policy_random, lmbda=1.0, n_search=1, c_puct = 2.5, playout_depth = 5, rollout_limit = 500)
 		self.mcts.aiColor = self.aiColor
 		
 		#gs = GameState()

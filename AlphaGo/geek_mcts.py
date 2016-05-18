@@ -26,7 +26,7 @@ def value_network_java(state):
 	value = blackImpactScope / (blackImpactScope + whiteImpactScope)
 	
 	#value = value 
-	print (value, state.history[-5:-1])
+	#print (value, state.history[-5:-1])
 	return value
 
 
@@ -131,8 +131,8 @@ class TreeNode(object):
 		Returns:
 		a tuple of (action, next_node)
 		"""
-		for (a, n) in self.children.iteritems():
-			print (a, n.Q_value, n.u_value, n.nVisits)
+		#for (a, n) in self.children.iteritems():
+		#	print (a, n.Q_value, n.u_value, n.nVisits)
 		return max(self.children.iteritems(), key=lambda (a, n): n.toValue())
 
 	def isLeaf(self):
@@ -156,7 +156,7 @@ class TreeNode(object):
 		self.Q_value = (mean_V + leaf_value) / self.nVisits
 		# update u (note that u is not normalized to be a distribution)
 		self.u_value = c_puct * self.P * np.sqrt(self.parent.nVisits) / (1 + self.nVisits)
-		print ('u_value', self.parent.nVisits, self.nVisits, self.u_value)
+		#print ('u_value', self.parent.nVisits, self.nVisits, self.u_value)
 	def toValue(self):
 		"""Return action value Q plus bonus u(P)
 		"""
@@ -211,7 +211,7 @@ class MCTS(object):
 				break
 			treenode.expansion(action_probs)
 			action, treenode = treenode.selection()
-			print action
+			#print action
 			state.do_move(action)
 			visited[index] = treenode
 
@@ -324,7 +324,7 @@ class ParallelMCTS(MCTS):
 		None
 		"""
 		isDebug = False
-		n_workers = multiprocessing.cpu_count() if not isDebug else 1  # set to 1 when debugging
+		n_workers = multiprocessing.cpu_count() - 2 if not isDebug else 1  # set to 1 when debugging
 		global worker_pool
 		if worker_pool is None:
 			worker_pool = Pool(processes=n_workers)
@@ -336,7 +336,7 @@ class ParallelMCTS(MCTS):
 		i = 0
 		j = 0
 		n = 100
-		m = 80
+		m = 50
 		while i < n:
 			stateCopy = state.copy();
 			treenodeCopy = treeRoot;
@@ -436,6 +436,8 @@ class ParallelMCTS(MCTS):
 		worker_pool = None
 		# chosen action is the *most visited child*, not the highest-value
 		# (note that they are the same as self._n_search gets large)
+		for (a, n) in self.root.children.iteritems():
+			print (a, n.Q_value, n.u_value, n.nVisits)
 		return max(self.root.children.iteritems(), key=lambda (a, n): n.nVisits)[0]
 
 		#instead , just chosen action with the highest-value

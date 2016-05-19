@@ -1,6 +1,6 @@
 ﻿import numpy as np
 from AlphaGo.expert import Expert
-from AlphaGo.go import GameState
+from AlphaGo.geekgo import GameState
 
 WHITE = -1
 BLACK = +1
@@ -31,12 +31,13 @@ class GameStateManager(object):
     manage GameState operation, and take the signal from the front-end
     """
 
-    def __init__(self, policyNet):
+    def __init__(self, policyNet, valueNet):
         self.game_state_instance = GameState()
         self.black_player = None
         self.white_player = None
         self.policy = policyNet
-        self.expert = Expert(self.policy, self.game_state_instance)
+        self.valueNet = valueNet
+        self.expert = Expert(self.policy, self.valueNet, self.game_state_instance)
         self.lastMove = (-1, -1)
 
     def _is_first_step(self):

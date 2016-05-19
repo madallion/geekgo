@@ -1,7 +1,7 @@
 ﻿
 from AlphaGo.go import GameState
-from AlphaGo.mcts import MCTS
-from AlphaGo.mcts import TreeNode
+from AlphaGo.geek_mcts import ParallelMCTS
+from AlphaGo.geek_mcts import TreeNode
 import random
 import unittest
 
@@ -25,13 +25,14 @@ BLACK = +1
 EMPTY = 0
 PASS_MOVE = None
 
-def policy_network_random_noEyes(state):
-	moves = state.get_legal_moves(include_eyes=False)
+def policy_network_random_noEyes(st):
+	moves = [move for move in st.get_legal_moves() if not st.is_eye(move, st.current_player)]
 	# 'random' distribution over positions that is smallest
 	# at (0,0) and largest at (18,18)
-	probs = np.arange(361, dtype=np.float)
-	probs = probs / probs.sum()
-	return zip(moves, probs)
+	actions = []
+	for move in moves:
+		actions.append((move, random.uniform(0, 1)))
+	return actions
 
 def policy_network_random_withEyes(state):
 	moves = state.get_legal_moves(include_eyes=True)
@@ -51,9 +52,11 @@ def policy_network_random(state):
 
 class Expert():
 
-	def __init__(self, policy, state, aiColor = WHITE):
+	def __init__(self, policy, valueNet, state, aiColor = WHITE):
 		self.policy = policy
-		self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=50, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
+		self.valueNet = valueNet
+		#self.mcts = MCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.5, n_search=50, c_puct = 2.5, playout_depth = 10, rollout_limit = 50)
+		self.mcts = ParallelMCTS(state, self.value_network, self.policy_network, self.rollout_policy, lmbda=0.75, n_search=1, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
 		#self.mcts = MCTS(self.gs, value_network, policy_network, rollout_policy_random, lmbda=0.5, n_search=90, c_puct = 2.5, playout_depth = 1, rollout_limit = 10)
 		self.aiColor = aiColor
 	def mcts_getMove(self, state, lastAction):
@@ -65,12 +68,14 @@ class Expert():
 		#quick move for first 10 steps
 		steps = len(state.history)
 		diff = moves[0][1] - moves[1][1]
-		if steps < 10 or diff > 0.15:
+		if steps < 20 or diff > 0.15:
 			move = moves[0][0];
 		else:
 			self.mcts._n_search += np.floor(steps * 0.5)
 			self.mcts._n_search -= np.floor(diff * 30)
 			self.mcts._n_search = int(self.mcts._n_search)
+
+			self.mcts._n_search = 1 #paralleled mcts hard code
 			move = self.mcts.get_move(state)
 
 		self.mcts.update_with_move(move)
@@ -84,12 +89,19 @@ class Expert():
 	def policy_network(self, state):
 	    nextMoveList = self.policy.eval_state(state, state.get_legal_moves())
 	    srtList = sorted(nextMoveList, key=lambda probDistribution: probDistribution[1], reverse=True);
-	    res = srtList[0:7]
+	    res = srtList[0:10]
 	    #shuffle(res)
 	    return res
 
-
 	def value_network(self, state):
+		value = value_net.eval_state(state)
+		if self.aiColor == WHITE:
+			value = 1 - value
+		print (value, state.history, len(state.history), state.current_player)
+		return value
+
+
+	def value_network_java(self, state):
 		sgfId = str(uuid.uuid4())
 		sgfPath = "d:\\tmp\\%s.value_network.sgf" % sgfId;
 		util.gamestate_to_sgf(state,  sgfPath)

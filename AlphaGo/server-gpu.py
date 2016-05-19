@@ -7,7 +7,7 @@ import uuid
 # relevant third-party libraries
 import bottle
 from bottle import request, response, route
-from keras.callbacks import ModelCheckpoint
+
 
 # local modules
 from AlphaGo.models.policy import CNNPolicy
@@ -23,7 +23,7 @@ POLICY = None
 def init_cnnpolicynetwork():
     global POLICY
     #train_folder = '/home/yimlin/betago_workspace/deploy'
-    train_folder = 'D:\\ps\\club\\Go\\models'
+    train_folder = 'D:\\yimlin\\models'
     metapath = os.path.join(train_folder, '46feats_model_0515.json')
     weights_file = os.path.join(train_folder, 'weights.models_redoSL-continueOn8thEpoch_20160509.hdf5')
     POLICY = CNNPolicy.load_model(metapath);
@@ -32,7 +32,7 @@ def init_cnnpolicynetwork():
 def init_cnnValueNetwork():
 	from AlphaGo.models.value import CNNValue
 	global VALUENET
-	train_folder = 'D:\\ps\\club\\Go\\models'
+	train_folder = 'D:\\yimlin\\models'
 	metapath = os.path.join(train_folder, 'value_model.json')
 	weights_file=os.path.join(train_folder, 'value.100games.weights.00009-bugfixed.hdf5');
 	VALUENET = CNNValue.load_model(metapath)

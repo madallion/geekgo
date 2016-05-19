@@ -19,9 +19,9 @@ class GameState(object):
 		self.ko = None
 		self.komi = komi
 		self.history = []
+		self.is_end_of_game = False
 		self.num_black_prisoners = 0
 		self.num_white_prisoners = 0
-		self.is_end_of_game = False
 		self.komi = komi  # Komi is number of extra points WHITE gets for going 2nd
 		# Each pass move by a player subtracts a point
 		self.passes_white = 0
@@ -46,10 +46,12 @@ class GameState(object):
 
 	def get_group(self, position):
 		"""Get the group of connected same-color stones to the given position
+
 		Keyword arguments:
 		position -- a tuple of (x, y)
 		x being the column index of the starting position of the search
 		y being the row index of the starting position of the search
+
 		Return:
 		a set of tuples consist of (x, y)s which are the same-color cluster
 		which contains the input single position. len(group) is size of the cluster, can be large.
@@ -60,12 +62,15 @@ class GameState(object):
 
 	def get_groups_around(self, position):
 		"""returns a list of the unique groups adjacent to position
+
 		'unique' means that, for example in this position:
+
 			. . . . .
 			. B W . .
 			. W W . .
 			. . . . .
 			. . . . .
+
 		only the one white group would be returned on get_groups_around((1,1))
 		"""
 		groups = []
@@ -88,7 +93,7 @@ class GameState(object):
 		the given (x,y) position. Basically it handles edges and corners.
 		"""
 		(x, y) = position
-		return [xy for xy in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] if self._on_board(xy)]
+		return filter(self._on_board, [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)])
 
 	def _diagonals(self, position):
 		"""Like _neighbors but for diagonal positions
@@ -140,16 +145,16 @@ class GameState(object):
 			# clear group_sets for all positions in 'group'
 			self.group_sets[x][y] = set()
 			self.liberty_sets[x][y] = set()
-			self.liberty_counts[x][y] = -1
+			self.liberty_counts[x][y] = 0
 			for (nx, ny) in self._neighbors((x, y)):
 				if self.board[nx, ny] == EMPTY:
 					# add empty neighbors of (x,y) to its liberties
 					self.liberty_sets[x][y].add((nx, ny))
+					self.liberty_counts[x][y] += 1
 				else:
 					# add (x,y) to the liberties of its nonempty neighbors
 					self.liberty_sets[nx][ny].add((x, y))
-					for (gx, gy) in self.group_sets[nx][ny]:
-						self.liberty_counts[gx][gy] = len(self.liberty_sets[nx][ny])
+					self.liberty_counts[nx][ny] += 1
 
 	def copy(self):
 		"""get a copy of this Game state
@@ -198,6 +203,7 @@ class GameState(object):
 
 	def is_legal(self, action):
 		"""determine if the given action (x,y tuple) is a legal move
+
 		note: we only check ko, not superko at this point (TODO?)
 		"""
 		# passing move
@@ -223,6 +229,7 @@ class GameState(object):
 
 	def is_eye(self, position, owner, stack=[]):
 		"""returns whether the position is a true eye of 'owner'
+
 		Requires a recursive call; empty spaces diagonal to 'position' are fine
 		as long as they themselves are eyes
 		"""
@@ -287,12 +294,11 @@ class GameState(object):
 
 	def do_move(self, action, color=None):
 		"""Play stone at action=(x,y). If color is not specified, current_player is used
+
 		If it is a legal move, current_player switches to the opposite color
 		If not, an IllegalMove exception is raised
 		"""
 		color = color or self.current_player
-		reset_player = self.current_player
-		self.current_player = color
 		if self.is_legal(action):
 			# reset ko
 			self.ko = None
@@ -300,7 +306,6 @@ class GameState(object):
 				(x, y) = action
 				self.board[x][y] = color
 				self._update_neighbors(action)
-
 				# check neighboring groups' liberties for captures
 				for (nx, ny) in self._neighbors(action):
 					if self.board[nx, ny] == -color and len(self.liberty_sets[nx][ny]) == 0:
@@ -332,11 +337,10 @@ class GameState(object):
 			self.turns_played += 1
 			self.history.append(action)
 		else:
-			self.current_player = reset_player
 			raise IllegalMove(str(action))
 		# Check for end of game
 		if len(self.history) > 1:
-			if self.history[-1] is PASS_MOVE and self.history[-2] is PASS_MOVE \
+			if self.history[-1] is None and self.history[-2] is None \
 				and self.current_player == WHITE:
 				self.is_end_of_game = True
 		return self.is_end_of_game

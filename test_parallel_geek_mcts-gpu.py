@@ -1,6 +1,8 @@
-Ôªø
+import theano
+print theano.config.dnn.enabled
+theano.config.dnn.enabled = False
 from AlphaGo.geekgo import GameState
-from AlphaGo.geek_mcts import MCTS
+from AlphaGo.geek_mcts import ParallelMCTS
 from AlphaGo.geek_mcts import TreeNode
 import random
 import unittest
@@ -31,7 +33,7 @@ PASS_MOVE = None
 def init_cnnpolicynetwork():
 	from AlphaGo.models.policy import CNNPolicy
 	global policy
-	train_folder = 'D:\\ps\\club\\Go\\models'
+	train_folder = 'D:\\yimlin\\models'
 	metapath = os.path.join(train_folder, '0516.policy.model.json')
 	weights_file=os.path.join(train_folder, 'tomSL.00010.hdf5');
 
@@ -44,26 +46,31 @@ def init_cnnpolicynetwork():
 
 def init_cnnValueNetwork():
 	from AlphaGo.models.value import CNNValue
-	global value_net
-	train_folder = 'D:\\ps\\club\\Go\\models'
+	global VALUENET
+	train_folder = 'D:\\yimlin\\models'
 	metapath = os.path.join(train_folder, 'value_model.json')
 	weights_file=os.path.join(train_folder, 'value.100games.weights.00009-bugfixed.hdf5');
 
 	with open(metapath) as metafile:
 	    metadata = json.load(metafile)
 	arch = {'filters_per_layer': 128} # args to CNNPolicy.create_network()
-	value_net = CNNValue.load_model(metapath)
-	value_net.model.load_weights(weights_file);
+	VALUENET = CNNValue.load_model(metapath)
+	VALUENET.model.load_weights(weights_file);
+
+def value_network(state):
+	value = VALUENET.eval_state(state)
+	print (value, state.history, len(state.history), state.current_player)
+	return value[0]	
 
 class TestMCTS(unittest.TestCase):
 
 	def setUp(self):
-		metapath = 'D:\\ps\\club\\Go\\exp\\2-7win1-17.bug.sgf'
+		metapath = 'D:\\yimlin\\exp\\2-7win1-17.bug.sgf'
 		with open(metapath, 'r') as metafile:
 			gs = geek_util.sgf_to_gamestate(metafile.read())
 		self.aiColor = BLACK
 		self.gs = gs
-		self.mcts = MCTS(self.gs, self.value_network, self.policy_network, self.rollout_policy_random, lmbda=1.0, n_search=10, c_puct = 2.5, playout_depth = 10, rollout_limit = 500)
+		self.mcts = ParallelMCTS(self.gs, self.value_network, self.policy_network, self.rollout_policy_random, lmbda=1.0, n_search=1, c_puct = 2.5, playout_depth = 5, rollout_limit = 500)
 		self.mcts.aiColor = self.aiColor
 		
 		#gs = GameState()
@@ -73,7 +80,7 @@ class TestMCTS(unittest.TestCase):
 		#self.mcts.aiColor = WHITE
 		init_cnnValueNetwork()
 		init_cnnpolicynetwork()
-		gsm = GameStateMan.GameStateManager(policy)
+		gsm = GameStateMan.GameStateManager(policy, VALUENET)
 		gsm.game_state_instance = gs
 		gsm.print_board()
 
@@ -119,7 +126,7 @@ class TestMCTS(unittest.TestCase):
 		return actions
 
 	def value_network_dummy(self, state):
-		#ÈáëËßíÈì∂ËæπËçâËÇöÁöÆ
+		#ΩΩ«“¯±ﬂ≤›∂«∆§
 		return 0.5
 
 
@@ -140,7 +147,7 @@ class TestMCTS(unittest.TestCase):
 
 
 	def value_network(self, state):
-		value = value_net.eval_state(state)
+		value = VALUENET.eval_state(state)
 		if self.aiColor == WHITE:
 			value = 1 - value
 		print (value, state.history, len(state.history), state.current_player)
